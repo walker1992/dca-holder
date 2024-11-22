@@ -20,7 +20,11 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 
 1. 填写配置文件.env.example, 并将其重命名为.env
 2. 确保已运行redis服务
-3. 通过python3 xxx.py启动程序, 程序会自动读取配置文件并开始运行, 可以使用screen/nohup/supervisor等方式实现进程守护
+3. 安装依赖 
+    ```
+    python3 -m pip install -r requirements.txt 
+    ```
+4. 通过python3 xxx.py启动程序, 程序会自动读取配置文件并开始运行, 可以使用screen/nohup/supervisor等方式实现进程守护
 
 ## 参考文献
 
