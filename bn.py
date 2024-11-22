@@ -394,10 +394,13 @@ def dca(user_id, trade):
         except ccxt.errors.RateLimitExceeded as e:
             logger.error(f"DCA RateLimitExceeded {type(e)}")
             time.sleep(10)
-        except ccxt.errors.NetworkError as e:
-            logger.error(f"DCA NetworkError {type(e)}")
         except ccxt.errors.InsufficientFunds:
             logger.warning(f"DCA InsufficientFunds")
+            time.sleep(10)
+        except ccxt.errors.NetworkError as e:
+            logger.error(f"DCA NetworkError {type(e)}")
+        except ccxt.errors.ExchangeError as e:
+            logger.error(f"DCA ExchangeError {str(e)}")
             time.sleep(10)
         except Exception as e:
             logger.error(f"dca error {type(e)} {e} {traceback.format_exc()}")
