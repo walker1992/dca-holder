@@ -2,7 +2,6 @@ import decimal
 import os
 import threading
 import dotenv
-
 import traceback
 import ccxt
 import time
@@ -65,13 +64,6 @@ except redis.exceptions.ConnectionError:
 
 BUY = "buy"
 SELL = "sell"
-
-TimestampIndex = 0
-OpenIndex = 1
-HighIndex = 2
-LowIndex = 3
-CloseIndex = 4
-VolumeIndex = 5
 
 EXTRA_AMOUNT = 5
 

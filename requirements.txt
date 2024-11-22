@@ -1,0 +1,5 @@
+python-dotenv
+ccxt
+loguru
+urllib3
+redis
