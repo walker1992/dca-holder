@@ -25,6 +25,9 @@ logger.info(f"SHARES: {SHARES}")
 MIN_AMOUNT = os.getenv("MIN_AMOUNT")
 if not MIN_AMOUNT:
     logger.error("请设置MIN_AMOUNT")
+MAX_AMOUNT = os.getenv("MAX_AMOUNT")
+if not MAX_AMOUNT:
+    logger.error("请设置MAX_AMOUNT")
 logger.info(f"MIN_AMOUNT: {MIN_AMOUNT}")
 MIN_PROFIT_PERCENT = os.getenv("MIN_PROFIT_PERCENT")
 if not MIN_PROFIT_PERCENT:
@@ -41,6 +44,7 @@ logger.info(f"INCREASE_POSITION_RATIO: {INCREASE_POSITION_RATIO}")
 if (
     not SHARES
     or not MIN_AMOUNT
+    or not MAX_AMOUNT
     or not MIN_PROFIT_PERCENT
     or not ADD_POSITION_RATIO
     or not INCREASE_POSITION_RATIO
@@ -51,6 +55,7 @@ if (
 pool = redis.ConnectionPool(
     host=os.getenv("REDIS_HOST"),
     port=os.getenv("REDIS_PORT"),
+    password=os.getenv("REDIS_PASSWORD"),
     db=os.getenv("REDIS_DB"),
     decode_responses=True,
 )
@@ -67,6 +72,7 @@ BUY = "buy"
 SELL = "sell"
 
 EXTRA_AMOUNT = 5
+MIN_SPOT_AMOUNT = 5
 
 MIN_SUBSCRIBE_BTC_AMOUNT = 0.0015
 MIN_SUBSCRIBE_USDT_AMOUNT = 0.1
@@ -105,7 +111,15 @@ def task(user_id, trade):
             Asset
         ) * trade.fetch_price(Asset)
         rdb.set(f"dca:{user_id}:{EX}:usdt:long:balance", usdt)
-    base_amount = max(float(usdt) / int(SHARES), float(MIN_AMOUNT))
+    base_amount = float(usdt) / int(SHARES)
+    if float(MIN_AMOUNT) > 0 and base_amount < float(MIN_AMOUNT):
+        base_amount = float(MIN_AMOUNT)
+    if float(MAX_AMOUNT) > 0 and base_amount > float(MAX_AMOUNT):
+        base_amount = float(MAX_AMOUNT)
+    logger.info(f"base_amount: {base_amount:.2f}")
+    if base_amount < MIN_SPOT_AMOUNT:
+        logger.info(f"base_amount: {base_amount:.2f} 小于最小交易额度")
+        return
     total = trade.spot.fetch_balance()["total"]
     total_value = 0
     total_cost = 0

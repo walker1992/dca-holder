@@ -8,4 +8,4 @@ services:
       - "6379:6379"
     volumes:
       - ./data/redis:/data
-
+#    command: redis-server --requirepass yourpassword
