@@ -41,15 +41,11 @@ INCREASE_POSITION_RATIO = os.getenv("INCREASE_POSITION_RATIO")
 if not INCREASE_POSITION_RATIO:
     logger.error("请设置INCREASE_POSITION_RATIO")
 logger.info(f"INCREASE_POSITION_RATIO: {INCREASE_POSITION_RATIO}")
-if (
-    not SHARES
-    or not MIN_AMOUNT
-    or not MAX_AMOUNT
-    or not MIN_PROFIT_PERCENT
-    or not ADD_POSITION_RATIO
-    or not INCREASE_POSITION_RATIO
-):
-    logger.error("请设置环境变量")
+
+try:
+    SHARES, MIN_AMOUNT, MAX_AMOUNT, MIN_PROFIT_PERCENT, ADD_POSITION_RATIO, INCREASE_POSITION_RATIO = int(SHARES), float(MIN_AMOUNT), float(MAX_AMOUNT), float(MIN_PROFIT_PERCENT), float(ADD_POSITION_RATIO), float(INCREASE_POSITION_RATIO)
+except ValueError:
+    logger.error("环境变量格式错误")
     exit(1)
 
 pool = redis.ConnectionPool(
@@ -111,11 +107,11 @@ def task(user_id, trade):
             Asset
         ) * trade.fetch_price(Asset)
         rdb.set(f"dca:{user_id}:{EX}:usdt:long:balance", usdt)
-    base_amount = float(usdt) / int(SHARES)
-    if float(MIN_AMOUNT) > 0 and base_amount < float(MIN_AMOUNT):
-        base_amount = float(MIN_AMOUNT)
-    if float(MAX_AMOUNT) > 0 and base_amount > float(MAX_AMOUNT):
-        base_amount = float(MAX_AMOUNT)
+    base_amount = float(usdt) / SHARES
+    if MIN_AMOUNT > 0 and base_amount < MIN_AMOUNT:
+        base_amount = MIN_AMOUNT
+    if MAX_AMOUNT > 0 and base_amount > MAX_AMOUNT:
+        base_amount = MAX_AMOUNT
     logger.info(f"base_amount: {base_amount:.2f}")
     if base_amount < MIN_SPOT_AMOUNT:
         logger.info(f"base_amount: {base_amount:.2f} 小于最小交易额度")
@@ -169,7 +165,7 @@ def task(user_id, trade):
         multiple = (
             (last_price - price)
             / last_price
-            // (float(ADD_POSITION_RATIO) + float(INCREASE_POSITION_RATIO) * count)
+            // (ADD_POSITION_RATIO + INCREASE_POSITION_RATIO * count)
         )
         if multiple >= 1:
             logger.info(f"加仓 {token}")
@@ -213,7 +209,7 @@ def task(user_id, trade):
                 return
 
     # 平仓
-    if total_value > total_cost * (1 + float(MIN_PROFIT_PERCENT)):
+    if total_value > total_cost * (1 + MIN_PROFIT_PERCENT):
         logger.info("平仓")
         for token, token_info in token_list.items():
             if token != Asset:
