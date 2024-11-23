@@ -171,7 +171,7 @@ def task(user_id, trade):
 
     last_total_cost = rdb.get(f"dca:{user_id}:{EX}:total_cost")
     if not last_total_cost or round(float(last_total_cost)) != round(total_cost):
-        rdb.set(f"dca:{user_id}:bitget:total_cost", total_cost)
+        rdb.set(f"dca:{user_id}:{EX}:total_cost", total_cost)
         if total_cost and total[Asset]:
             logger.info(
                 f"entry_price: {total_cost / total[Asset]:.2f} total_cost: {total_cost:.2f} total_value:{total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
