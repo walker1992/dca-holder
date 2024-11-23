@@ -169,6 +169,7 @@ def task(user_id, trade):
                 time.sleep(3)
                 return
 
+    # 每次交易后, 重新计算平均成本和最新盈亏
     last_total_cost = rdb.get(f"dca:{user_id}:{EX}:total_cost")
     if not last_total_cost or round(float(last_total_cost)) != round(total_cost):
         rdb.set(f"dca:{user_id}:{EX}:total_cost", total_cost)
