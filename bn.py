@@ -11,6 +11,7 @@ import urllib3
 import redis
 
 EX = "bn"
+Asset = "BTC"
 
 logger = logger.patch(lambda record: record.update(name=f"[{EX}-spot]"))
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -101,26 +102,25 @@ def task(user_id, trade):
     usdt = rdb.get(f"dca:{user_id}:{EX}:usdt:long:balance")
     if not usdt:
         usdt = trade.fetch_balance("USDT") + trade.fetch_balance(
-            "BTC"
-        ) * trade.fetch_price("BTC")
+            Asset
+        ) * trade.fetch_price(Asset)
         rdb.set(f"dca:{user_id}:{EX}:usdt:long:balance", usdt)
     base_amount = max(float(usdt) / int(SHARES), float(MIN_AMOUNT))
     total = trade.spot.fetch_balance()["total"]
     total_value = 0
     total_cost = 0
+    # 有些情况下币种会卖不干净, 成为灰尘币
     dust_token = set()
-    holding_token = set()
-    TokenList, SymbolList = {}, {}
-    if "BTC" not in total:
-        price = trade.fetch_price("BTC")
-        TokenList["BTC"] = TokenInfo("BTC", "BTC/USDT", 0, price)
-        SymbolList["BTC/USDT"] = TokenInfo("BTC", "BTC/USDT", 0, price)
+    token_list = {}
+    if Asset not in total:
+        price = trade.fetch_price(Asset)
+        token_list[Asset] = TokenInfo(Asset, f"{Asset}/USDT", 0, price)
     for token in total:
         if token == "USDT":
             if total["USDT"] < base_amount + EXTRA_AMOUNT:
                 trade.redeem("USDT", base_amount + EXTRA_AMOUNT - total["USDT"])
                 return
-        if token != "BTC":
+        if token != Asset:
             continue
         balance = total[token]
         if balance == 0:
@@ -132,7 +132,6 @@ def task(user_id, trade):
         if value < EXTRA_AMOUNT:
             dust_token.add(token)
             continue
-        holding_token.add(token)
         total_value += value
         cost = rdb.get(f"dca:{user_id}:{EX}:{token}:long:cost")
         if not cost:
@@ -150,8 +149,7 @@ def task(user_id, trade):
         total_cost += cost
         last_price = float(last_price)
         count = int(count)
-        TokenList[token] = TokenInfo(token, symbol, balance, price)
-        SymbolList[symbol] = TokenInfo(token, symbol, balance, price)
+        token_list[token] = TokenInfo(token, symbol, balance, price)
 
         # 加仓
         multiple = (
@@ -174,16 +172,16 @@ def task(user_id, trade):
     last_total_cost = rdb.get(f"dca:{user_id}:{EX}:total_cost")
     if not last_total_cost or round(float(last_total_cost)) != round(total_cost):
         rdb.set(f"dca:{user_id}:bitget:total_cost", total_cost)
-        if total_cost and total["BTC"]:
+        if total_cost and total[Asset]:
             logger.info(
-                f"entry_price: {total_cost / total['BTC']:.2f} total_cost: {total_cost:.2f} total_value:{total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
+                f"entry_price: {total_cost / total[Asset]:.2f} total_cost: {total_cost:.2f} total_value:{total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
             )
 
     # 开仓
-    for token in TokenList:
-        if token != "BTC":
+    for token in token_list:
+        if token != Asset:
             continue
-        token_info = TokenList[token]
+        token_info = token_list[token]
         if token not in total or token in dust_token:
             logger.info(f"开仓 {token}")
             rdb.delete(f"dca:{user_id}:{EX}:{token}:long:price")
@@ -202,25 +200,26 @@ def task(user_id, trade):
     # 平仓
     if total_value > total_cost * (1 + float(MIN_PROFIT_PERCENT)):
         logger.info("平仓")
-        for token, token_info in TokenList.items():
-            if token != "BTC":
+        for token, token_info in token_list.items():
+            if token != Asset:
                 continue
-            reserve_btc = (total_value - total_cost) / token_info.price
+            # 将净盈利的Asset转到资金账户
+            reserve = (total_value - total_cost) / token_info.price
             logger.info(
-                f"btc reserve: ${reserve_btc * token_info.price:.2f} {reserve_btc:.8f} BTC at {token_info.price:.2f}"
+                f"reserve: ${reserve * token_info.price:.2f} {reserve:.8f} {Asset} at {token_info.price:.2f}"
             )
             try:
                 trade.spot.sapi_post_asset_transfer(
                     {
                         "type": "MAIN_FUNDING",
-                        "asset": "BTC",
-                        "amount": reserve_btc,
+                        "asset": Asset,
+                        "amount": reserve,
                         "timestamp": int(time.time() * 1000),
                     }
                 )
             except Exception as e:
-                logger.error(f"{EX}b reserve error: {e}")
-            token_info.balance = token_info.balance - reserve_btc
+                logger.error(f"{EX} reserve error: {e}")
+            token_info.balance = token_info.balance - reserve
             count = rdb.get(f"dca:{user_id}:{EX}:{token}:long:count")
             # 加仓后的止盈与没有加仓的止盈方案不一样, 保证尽量少交易, 减少手续费
             if count:
@@ -277,7 +276,8 @@ class Trade:
         return self.spot.fetch_total_balance().get(token, 0)
 
     def fetch_earn_balance(self, token):
-        if token == "BTC":
+        # 理财账户的Asset不计算, 因为申购一般有门槛
+        if token == Asset:
             return 0
         poss = self.spot.sapiGetSimpleEarnFlexiblePosition()["rows"]
         for pos in poss:
@@ -316,8 +316,6 @@ class Trade:
             logger.error(e)
 
     def redeem(self, token, amount):
-        if amount < 0.1:
-            return
         logger.info(f"redeem {amount} {token}")
         amount = decimal.Decimal(amount).quantize(
             Decimal("0.00000001"), rounding=ROUND_FLOOR
@@ -365,10 +363,19 @@ class Trade:
 
 
 def main():
-    uids = os.getenv("BN_UID").split(",")
-    api_keys = os.getenv("BN_API_KEY").split(",")
-    secret_keys = os.getenv("BN_SECRET_KEY").split(",")
-
+    uids, api_keys, secret_keys = (
+        os.getenv("BN_UID"),
+        os.getenv("BN_API_KEY"),
+        os.getenv("BN_SECRET_KEY"),
+    )
+    if not uids or not api_keys or not secret_keys:
+        logger.error("请设置BN_UID, BN_API_KEY, BN_SECRET_KEY")
+        return
+    uids, api_keys, secret_keys = (
+        uids.split(","),
+        api_keys.split(","),
+        secret_keys.split(","),
+    )
     if len(uids) != len(api_keys) != len(secret_keys):
         logger.error("uid, api_key, secret_key not match")
         return
