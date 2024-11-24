@@ -121,7 +121,7 @@ def task(user_id, trade):
     # 有些情况下币种会卖不干净, 成为灰尘币
     dust_token = set()
     token_list = {}
-    if Asset not in total:
+    if Asset not in total or total[Asset] == 0:
         price = trade.fetch_price(Asset)
         token_list[Asset] = TokenInfo(Asset, f"{Asset}/USDT", 0, price)
     for token in total:
