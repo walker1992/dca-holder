@@ -112,7 +112,6 @@ def task(user_id, trade):
         base_amount = MIN_AMOUNT
     if MAX_AMOUNT > 0 and base_amount > MAX_AMOUNT:
         base_amount = MAX_AMOUNT
-    logger.info(f"base_amount: {base_amount:.2f}")
     if base_amount < MIN_SPOT_AMOUNT:
         logger.info(f"base_amount: {base_amount:.2f} 小于最小交易额度")
         return
