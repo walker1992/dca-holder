@@ -27,9 +27,9 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 
 ## 注意事项
 1. 程序初始时, 请保证你的现货账户中不持有任何BTC, 并且现货或理财账户中拥有足够的USDT
-2. 策略将会利用你现货账户中的USDT和BTC, 以及理财账户中的USDT, 而理财账户中的BTC会被忽略, 以便您手动将资金账户中的BTC转移至理财账户
+2. 策略将会利用你现货账户中的USDT和BTC, 以及理财账户中的USDT, 而理财账户中的BTC会被忽略, 您可以手动将资金账户中的BTC转移至理财账户
 3. 关闭理财账户的自动申购
-4. 程序运行后, 不要手动买入BTC, 但可以手动充值USDT到现货账户
+4. 程序运行后, 不要手动交易BTC, 充提USDT或交易其他币种不影响策略
 
 ## 参考文献
 
