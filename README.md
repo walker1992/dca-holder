@@ -11,10 +11,9 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 ## 特点
 
 1. 只需要填写API即可开启自动化交易, 目前支持币安, 只支持现货BTC/USDT, 支持多账户
-2. 程序初始时, 请保证你的现货账户中不持有任何BTC, 并且现货或理财账户中拥有足够的USDT
-3. 核心思想是平均成本与屯币, 如果价格上涨, 将在固定盈利点卖出, 并将盈利部分转移至资金账户进行屯币, 如果价格下跌, 将不断补仓, 拉低成本
-4. 策略将会利用你现货账户中的USDT和BTC, 以及理财账户中的USDT, 而理财账户中的BTC会被忽略, 以便您手动将资金账户中的BTC转移至理财账户
-5. 如果所有资金都买入了BTC导致报错DCA InsufficientFunds, 这时候BTC处于历史低位, 应该从其他地方划转USDT到交易所
+2. 核心思想是平均成本与屯币, 如果价格上涨, 将在固定盈利点卖出, 并将盈利部分转移至资金账户进行屯币, 如果价格下跌, 将不断补仓, 拉低成本
+3. 闲置的USDT会自动划转到理财账户享受借贷利润
+4. 如果长期下跌后账户中已经没有足够USDT继续买入BTC, 这时候BTC处于历史低位, 应该从其他地方划转USDT到交易所, 维持程序正常运行
 
 ## 使用
 
@@ -25,6 +24,12 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
     python3 -m pip install -r requirements.txt 
     ```
 4. 通过python3 xxx.py启动程序, 程序会自动读取配置文件并开始运行, 可以使用screen/nohup/supervisor等方式实现进程守护
+
+## 注意事项
+1. 程序初始时, 请保证你的现货账户中不持有任何BTC, 并且现货或理财账户中拥有足够的USDT
+2. 策略将会利用你现货账户中的USDT和BTC, 以及理财账户中的USDT, 而理财账户中的BTC会被忽略, 以便您手动将资金账户中的BTC转移至理财账户
+3. 关闭理财账户的自动申购
+4. 程序运行后, 不要手动买入BTC, 但可以手动充值USDT到现货账户
 
 ## 参考文献
 
