@@ -1,7 +1,7 @@
 from common import *
 from dca import Trade
 
-EX = "BN"
+EX = "BITGET"
 
 logger = logger.patch(lambda record: record.update(name=f"[{EX}]"))
 
@@ -69,26 +69,39 @@ REDEEM_LIMIT = {
     "USDT": MIN_REDEEM_USDT_AMOUNT,
 }
 
+PRODUCT_ID = {
+    "BTC": "928476216922914817",
+    "USDT": "964334561256718336",
+}
 
-def init_binance_trade():
+
+def init_bitget_trade():
     trades = []
-    uids, api_keys, secret_keys = (
+    uids, api_keys, secret_keys, passwords = (
         os.getenv(f"{EX}_UID"),
         os.getenv(f"{EX}_API_KEY"),
         os.getenv(f"{EX}_SECRET_KEY"),
+        os.getenv(f"{EX}_PASSWORD"),
     )
     if uids and api_keys and secret_keys:
-        uids, api_keys, secret_keys = (
+        uids, api_keys, secret_keys, passwords = (
             uids.split(","),
             api_keys.split(","),
             secret_keys.split(","),
+            passwords.split(","),
         )
-        if len(uids) != len(api_keys) or len(api_keys) != len(secret_keys):
-            logger.error("UID, API_KEY, and SECRET_KEY must have the same length")
+        if (
+            len(uids) != len(api_keys)
+            or len(api_keys) != len(secret_keys)
+            or len(secret_keys) != len(passwords)
+        ):
+            logger.error(
+                "UID, API_KEY, and SECRET_KEY and PASSWORD must have the same length"
+            )
             return
 
         for idx, uid in enumerate(uids):
-            client = BinanceClient(api_keys[idx], secret_keys[idx])
+            client = BitgetClient(api_keys[idx], secret_keys[idx], passwords[idx])
             trade = Trade(
                 user_id=uid,
                 exchange=EX,
@@ -105,18 +118,20 @@ def init_binance_trade():
     return trades
 
 
-class BinanceClient:
-    def __init__(self, api_key, api_secret):
-        self.spot = self.connect_exchange(api_key, api_secret, DEFAULT_TYPE)
+class BitgetClient:
+    def __init__(self, api_key, api_secret, password):
+        self.spot = self.connect_exchange(api_key, api_secret, password, DEFAULT_TYPE)
 
-    def connect_exchange(self, apiKey, secretKey, defaultType):
-        return ccxt.binance(
+    def connect_exchange(self, apiKey, secretKey, password, defaultType):
+        return ccxt.bitget(
             {
                 "verify": False,
                 "enableRateLimit": True,
                 "options": {
                     "defaultType": defaultType,
+                    "createMarketBuyOrderRequiresPrice": False,
                 },
+                "password": password,
                 "apiKey": apiKey,
                 "secret": secretKey,
             }
@@ -130,12 +145,12 @@ class BinanceClient:
 
     def fetch_earn_balance(self, token):
         # 理财账户的Asset不计算, 因为申购一般有门槛
-        if token == Asset:
+        if token == "BTC":
             return 0
-        poss = self.spot.sapiGetSimpleEarnFlexiblePosition()["rows"]
+        poss = self.spot.private_earn_get_v2_earn_savings_assets()["data"]["resultList"]
         for pos in poss:
-            if pos["asset"] == token:
-                return float(pos["totalAmount"])
+            if pos["productCoin"] == token:
+                return float(pos["holdAmount"])
         return 0
 
     def fetch_balance(self, token):
@@ -158,11 +173,12 @@ class BinanceClient:
             lower = SUBSCRIBE_LIMIT[token]
             if amount < lower:
                 return
-            self.spot.sapiPostSimpleEarnFlexibleSubscribe(
+
+            self.spot.private_earn_post_v2_earn_savings_subscribe(
                 {
-                    "productId": token + "001",
+                    "productId": PRODUCT_ID[token],
                     "amount": amount,
-                    "timestamp": int(time.time() * 1000),
+                    "periodType": "flexible",
                 }
             )
         except Exception as e:
@@ -176,24 +192,22 @@ class BinanceClient:
         lower = REDEEM_LIMIT[token]
         if amount < lower:
             amount = lower
-        self.spot.sapiPostSimpleEarnFlexibleRedeem(
+        self.spot.private_earn_post_v2_earn_savings_redeem(
             {
-                "productId": token + "001",
+                "productId": PRODUCT_ID[token],
                 "amount": amount,
-                "timestamp": int(time.time() * 1000),
-            }
+                "periodType": "flexible",
+            },
         )
 
     def transfer_to_funding(self, reserve):
         logger.info(f"reserve: {reserve:.8f} {Asset}")
         try:
-            self.spot.sapi_post_asset_transfer(
-                {
-                    "type": "MAIN_FUNDING",
-                    "asset": Asset,
-                    "amount": reserve,
-                    "timestamp": int(time.time() * 1000),
-                }
+            self.spot.transfer(
+                fromAccount="spot",
+                toAccount="p2p",
+                code="BTC",
+                amount=f"{reserve:.8f}",
             )
         except Exception as e:
             logger.error(e)
@@ -203,7 +217,7 @@ class BinanceClient:
         order = self.spot.create_market_order(
             symbol=symbol,
             side=side,
-            amount=amount,
+            amount=amount if side == SELL else value,
         )
         while True:
             order = self.spot.fetch_order(order["id"], symbol)
