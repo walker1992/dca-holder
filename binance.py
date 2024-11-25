@@ -13,10 +13,11 @@ logger.info(f"SHARES: {SHARES}")
 MIN_AMOUNT = os.getenv(f"{EX}_MIN_AMOUNT")
 if not MIN_AMOUNT:
     logger.error("请设置MIN_AMOUNT")
+logger.info(f"MIN_AMOUNT: {MIN_AMOUNT}")
 MAX_AMOUNT = os.getenv(f"{EX}_MAX_AMOUNT")
 if not MAX_AMOUNT:
     logger.error("请设置MAX_AMOUNT")
-logger.info(f"MIN_AMOUNT: {MIN_AMOUNT}")
+logger.info(f"MAX_AMOUNT: {MAX_AMOUNT}")
 MIN_PROFIT_PERCENT = os.getenv(f"{EX}_MIN_PROFIT_PERCENT")
 if not MIN_PROFIT_PERCENT:
     logger.error("请设置MIN_PROFIT_PERCENT")
