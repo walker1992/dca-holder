@@ -84,7 +84,7 @@ def init_bitget_trade():
         os.getenv(f"{EX}_SECRET_KEY"),
         os.getenv(f"{EX}_PASSWORD"),
     )
-    if uids and api_keys and secret_keys:
+    if uids and api_keys and secret_keys and passwords:
         uids, api_keys, secret_keys, passwords = (
             uids.split(","),
             api_keys.split(","),
