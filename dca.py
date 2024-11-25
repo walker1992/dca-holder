@@ -73,7 +73,6 @@ def dca_strategy(trade: Trade):
         base_amount = min_amount
     if max_amount > 0 and base_amount > max_amount:
         base_amount = max_amount
-    logger.info(f"dca:{user_id}:{ex} base_amount: {base_amount:.2f}")
     if base_amount < MIN_SPOT_AMOUNT:
         logger.info(f"dca:{user_id}:{ex} base_amount: {base_amount:.2f} 小于最小交易额度")
         return
