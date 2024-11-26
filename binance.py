@@ -3,55 +3,6 @@ from dca import Trade
 
 EX = "BN"
 
-logger = logger.patch(lambda record: record.update(name=f"[{EX}]"))
-
-
-SHARES = os.getenv(f"{EX}_SHARES")
-if not SHARES:
-    logger.error("请设置SHARES")
-logger.info(f"SHARES: {SHARES}")
-MIN_AMOUNT = os.getenv(f"{EX}_MIN_AMOUNT")
-if not MIN_AMOUNT:
-    logger.error("请设置MIN_AMOUNT")
-logger.info(f"MIN_AMOUNT: {MIN_AMOUNT}")
-MAX_AMOUNT = os.getenv(f"{EX}_MAX_AMOUNT")
-if not MAX_AMOUNT:
-    logger.error("请设置MAX_AMOUNT")
-logger.info(f"MAX_AMOUNT: {MAX_AMOUNT}")
-MIN_PROFIT_PERCENT = os.getenv(f"{EX}_MIN_PROFIT_PERCENT")
-if not MIN_PROFIT_PERCENT:
-    logger.error("请设置MIN_PROFIT_PERCENT")
-logger.info(f"MIN_PROFIT_PERCENT: {MIN_PROFIT_PERCENT}")
-ADD_POSITION_RATIO = os.getenv(f"{EX}_ADD_POSITION_RATIO")
-if not ADD_POSITION_RATIO:
-    logger.error("请设置ADD_POSITION_RATIO")
-logger.info(f"ADD_POSITION_RATIO: {ADD_POSITION_RATIO}")
-INCREASE_POSITION_RATIO = os.getenv(f"{EX}_INCREASE_POSITION_RATIO")
-if not INCREASE_POSITION_RATIO:
-    logger.error("请设置INCREASE_POSITION_RATIO")
-logger.info(f"INCREASE_POSITION_RATIO: {INCREASE_POSITION_RATIO}")
-
-try:
-    (
-        SHARES,
-        MIN_AMOUNT,
-        MAX_AMOUNT,
-        MIN_PROFIT_PERCENT,
-        ADD_POSITION_RATIO,
-        INCREASE_POSITION_RATIO,
-    ) = (
-        int(SHARES),
-        float(MIN_AMOUNT),
-        float(MAX_AMOUNT),
-        float(MIN_PROFIT_PERCENT),
-        float(ADD_POSITION_RATIO),
-        float(INCREASE_POSITION_RATIO),
-    )
-except ValueError:
-    logger.error("环境变量格式错误")
-    exit(1)
-
-
 MIN_SUBSCRIBE_BTC_AMOUNT = 0.0015
 MIN_SUBSCRIBE_USDT_AMOUNT = 0.1
 
@@ -63,7 +14,6 @@ SUBSCRIBE_LIMIT = {
 MIN_REDEEM_BTC_AMOUNT = 0.00001
 # MIN_REDEEM_USDT_AMOUNT = 0.001
 MIN_REDEEM_USDT_AMOUNT = 1
-MIN_REDEEM_BNB_AMOUNT = 0.00001
 
 REDEEM_LIMIT = {
     "BTC": MIN_REDEEM_BTC_AMOUNT,
@@ -90,16 +40,17 @@ def init_binance_trade():
 
         for idx, uid in enumerate(uids):
             client = BinanceClient(api_keys[idx], secret_keys[idx], "")
+            trade_params = TradeParams(EX)
             trade = Trade(
                 user_id=uid,
                 exchange=EX,
                 client=client,
-                shares=SHARES,
-                min_amount=MIN_AMOUNT,
-                max_amount=MAX_AMOUNT,
-                min_profit_percent=MIN_PROFIT_PERCENT,
-                add_position_ratio=ADD_POSITION_RATIO,
-                increase_position_ratio=INCREASE_POSITION_RATIO,
+                shares=trade_params.shares,
+                min_amount=trade_params.min_amount,
+                max_amount=trade_params.max_amount,
+                min_profit_percent=trade_params.min_profit_percent,
+                add_position_ratio=trade_params.add_position_ratio,
+                increase_position_ratio=trade_params.increase_position_ratio,
             )
             trades.append(trade)
 

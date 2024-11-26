@@ -44,6 +44,59 @@ except redis.exceptions.ConnectionError:
     exit(1)
 
 
+class TradeParams:
+    def __init__(self, EX):
+        SHARES = os.getenv(f"{EX}_SHARES")
+        if not SHARES:
+            logger.error("请设置SHARES")
+        logger.info(f"{EX}_SHARES: {SHARES}")
+        MIN_AMOUNT = os.getenv(f"{EX}_MIN_AMOUNT")
+        if not MIN_AMOUNT:
+            logger.error("请设置MIN_AMOUNT")
+        logger.info(f"{EX}_MIN_AMOUNT: {MIN_AMOUNT}")
+        MAX_AMOUNT = os.getenv(f"{EX}_MAX_AMOUNT")
+        if not MAX_AMOUNT:
+            logger.error("请设置MAX_AMOUNT")
+        logger.info(f"{EX}_MAX_AMOUNT: {MAX_AMOUNT}")
+        MIN_PROFIT_PERCENT = os.getenv(f"{EX}_MIN_PROFIT_PERCENT")
+        if not MIN_PROFIT_PERCENT:
+            logger.error("请设置MIN_PROFIT_PERCENT")
+        logger.info(f"{EX}_MIN_PROFIT_PERCENT: {MIN_PROFIT_PERCENT}")
+        ADD_POSITION_RATIO = os.getenv(f"{EX}_ADD_POSITION_RATIO")
+        if not ADD_POSITION_RATIO:
+            logger.error("请设置ADD_POSITION_RATIO")
+        logger.info(f"{EX}_ADD_POSITION_RATIO: {ADD_POSITION_RATIO}")
+        INCREASE_POSITION_RATIO = os.getenv(f"{EX}_INCREASE_POSITION_RATIO")
+        if not INCREASE_POSITION_RATIO:
+            logger.error("请设置INCREASE_POSITION_RATIO")
+        logger.info(f"{EX}_INCREASE_POSITION_RATIO: {INCREASE_POSITION_RATIO}")
+        try:
+            (
+                SHARES,
+                MIN_AMOUNT,
+                MAX_AMOUNT,
+                MIN_PROFIT_PERCENT,
+                ADD_POSITION_RATIO,
+                INCREASE_POSITION_RATIO,
+            ) = (
+                int(SHARES),
+                float(MIN_AMOUNT),
+                float(MAX_AMOUNT),
+                float(MIN_PROFIT_PERCENT),
+                float(ADD_POSITION_RATIO),
+                float(INCREASE_POSITION_RATIO),
+            )
+        except ValueError:
+            logger.error("环境变量配置错误")
+            raise ValueError("环境变量配置错误")
+        self.shares = SHARES
+        self.min_amount = MIN_AMOUNT
+        self.max_amount = MAX_AMOUNT
+        self.min_profit_percent = MIN_PROFIT_PERCENT
+        self.add_position_ratio = ADD_POSITION_RATIO
+        self.increase_position_ratio = INCREASE_POSITION_RATIO
+
+
 class TokenInfo:
     def __init__(self, token, symbol, balance, price):
         self.token = token
