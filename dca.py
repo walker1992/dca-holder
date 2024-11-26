@@ -27,7 +27,7 @@ class Trade:
 
 def dca_task(trade: Trade):
     user_id, ex = trade.user_id, trade.exchange
-    logger.info(f"dca #{user_id}:{ex} start")
+    logger.info(f"#{user_id}:{ex} start")
     rdb.delete(f"dca:{user_id}:{ex}:total_cost")
     while True:
         try:
