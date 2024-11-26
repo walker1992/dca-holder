@@ -1,11 +1,7 @@
 import redis
 from loguru import logger
 import os
-import decimal
-import ccxt
-import time
 from decimal import Decimal, ROUND_FLOOR
-import traceback
 import urllib3
 import dotenv
 
