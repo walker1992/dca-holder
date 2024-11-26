@@ -119,17 +119,18 @@ def init_bitget_trade():
     return trades
 
 
-class BitgetClient:
-    def __init__(self, api_key, api_secret, password):
-        self.spot = self.connect_exchange(api_key, api_secret, password, DEFAULT_TYPE)
+class BitgetClient(BaseClient):
+    def __init__(self, api_key, secret_key, password):
+        super().__init__(api_key, secret_key, password)
+        self.spot = self.connect_exchange(api_key, secret_key, password)
 
-    def connect_exchange(self, apiKey, secretKey, password, defaultType):
+    def connect_exchange(self, apiKey, secretKey, password):
         return ccxt.bitget(
             {
                 "verify": False,
                 "enableRateLimit": True,
                 "options": {
-                    "defaultType": defaultType,
+                    "defaultType": DEFAULT_TYPE,
                     "createMarketBuyOrderRequiresPrice": False,
                 },
                 "password": password,
@@ -137,12 +138,6 @@ class BitgetClient:
                 "secret": secretKey,
             }
         )
-
-    def fetch_symbol(self, token):
-        return token + "/USDT"
-
-    def fetch_spot_balance(self, token):
-        return self.spot.fetch_total_balance().get(token, 0)
 
     def fetch_earn_balance(self, token):
         # 理财账户的Asset不计算, 因为申购一般有门槛
@@ -154,23 +149,14 @@ class BitgetClient:
                 return float(pos["holdAmount"])
         return 0
 
-    def fetch_balance(self, token):
-        return self.fetch_spot_balance(token) + self.fetch_earn_balance(token)
-
-    def fetch_price(self, token):
-        if token == "USDT":
-            return 1
-        return self.spot.fetch_ticker(token + "/USDT")["last"]
-
-    def fetch_value(self, token):
-        return self.fetch_balance(token) * self.fetch_price(token)
-
     def subscribe(self, token, amount):
         logger.info(f"subscribe {amount} {token}")
         try:
-            amount = float(decimal.Decimal(amount).quantize(
-                Decimal("0.00000001"), rounding=ROUND_FLOOR
-            ))
+            amount = float(
+                decimal.Decimal(amount).quantize(
+                    Decimal("0.00000001"), rounding=ROUND_FLOOR
+                )
+            )
             lower = SUBSCRIBE_LIMIT[token]
             if amount < lower:
                 return
@@ -187,9 +173,11 @@ class BitgetClient:
 
     def redeem(self, token, amount):
         logger.info(f"redeem {amount} {token}")
-        amount = float(decimal.Decimal(amount).quantize(
-            Decimal("0.00000001"), rounding=ROUND_FLOOR
-        ))
+        amount = float(
+            decimal.Decimal(amount).quantize(
+                Decimal("0.00000001"), rounding=ROUND_FLOOR
+            )
+        )
         lower = REDEEM_LIMIT[token]
         if amount < lower:
             amount = lower

@@ -52,5 +52,46 @@ class TokenInfo:
         self.price = price
 
 
+class BaseClient:
+    def __init__(self, api_key, secret_key, password):
+        self.spot = self.connect_exchange(api_key, secret_key, password)
+
+    def fetch_symbol(self, token):
+        return token + "/USDT"
+
+    def fetch_spot_balance(self, token):
+        return self.spot.fetch_total_balance().get(token, 0)
+
+    def fetch_balance(self, token):
+        return self.fetch_spot_balance(token) + self.fetch_earn_balance(token)
+
+    def fetch_price(self, token):
+        if token == "USDT":
+            return 1
+        return self.spot.fetch_ticker(token + "/USDT")["last"]
+
+    def fetch_value(self, token):
+        return self.fetch_balance(token) * self.fetch_price(token)
+
+    # 每个交易所必须实现以下方法
+    def connect_exchange(self, api_key, secret_key, password):
+        raise NotImplementedError
+
+    def trading(self, symbol, side, amount, value):
+        raise NotImplementedError
+
+    def fetch_earn_balance(self, token):
+        raise NotImplementedError
+
+    def subscribe(self, token, amount):
+        raise NotImplementedError
+
+    def redeem(self, token, amount):
+        raise NotImplementedError
+
+    def transfer_to_funding(self, reserve):
+        raise NotImplementedError
+
+
 def send_notification(content):
     logger.info(content)
