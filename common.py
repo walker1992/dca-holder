@@ -142,8 +142,12 @@ class BaseClient:
     def redeem(self, token, amount):
         raise NotImplementedError
 
-    def transfer_to_funding(self, reserve):
+    def transfer_to_funding(self, amount):
         raise NotImplementedError
+
+
+def round_down(amount: float):
+    return float(Decimal(amount).quantize(Decimal("0.00000001"), rounding=ROUND_FLOOR))
 
 
 def send_notification(content):

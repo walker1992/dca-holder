@@ -99,13 +99,9 @@ class BitgetClient(BaseClient):
         return 0
 
     def subscribe(self, token, amount):
+        amount = round_down(amount)
         logger.info(f"subscribe {amount} {token}")
         try:
-            amount = float(
-                decimal.Decimal(amount).quantize(
-                    Decimal("0.00000001"), rounding=ROUND_FLOOR
-                )
-            )
             lower = SUBSCRIBE_LIMIT[token]
             if amount < lower:
                 return
@@ -121,12 +117,8 @@ class BitgetClient(BaseClient):
             logger.error(e)
 
     def redeem(self, token, amount):
+        amount = round_down(amount)
         logger.info(f"redeem {amount} {token}")
-        amount = float(
-            decimal.Decimal(amount).quantize(
-                Decimal("0.00000001"), rounding=ROUND_FLOOR
-            )
-        )
         lower = REDEEM_LIMIT[token]
         if amount < lower:
             amount = lower
@@ -139,14 +131,12 @@ class BitgetClient(BaseClient):
         )
         time.sleep(5)
 
-    def transfer_to_funding(self, reserve):
-        logger.info(f"reserve: {reserve:.8f} {Asset}")
+    def transfer_to_funding(self, amount):
+        amount = round_down(amount)
+        logger.info(f"reserve: {amount} {Asset}")
         try:
             self.spot.transfer(
-                fromAccount="spot",
-                toAccount="p2p",
-                code=Asset,
-                amount=float(decimal.Decimal(reserve).quantize(Decimal("0.00000001"), rounding=ROUND_FLOOR))
+                fromAccount="spot", toAccount="p2p", code=Asset, amount=amount
             )
         except Exception as e:
             logger.error(e)
