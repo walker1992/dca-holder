@@ -41,6 +41,8 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 
 [https://binance-docs.github.io/apidocs/spot/cn](https://binance-docs.github.io/apidocs/spot/cn)
 
+[https://www.bitget.com/zh-CN/api-doc/spot/intro](https://www.bitget.com/zh-CN/api-doc/spot/intro)
+
 ## License
 
 [MIT licensed](./LICENSE)
