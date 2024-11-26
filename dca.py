@@ -147,7 +147,7 @@ def dca_strategy(trade: Trade):
         rdb.set(f"dca:{user_id}:{ex}:total_cost", total_cost)
         if total_cost and total[Asset]:
             logger.info(
-                f"#{user_id}:{ex} entry_price: {total_cost / total[Asset]:.2f} total_cost: {total_cost:.2f} total_value:{total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
+                f"#{user_id}:{ex} entry_price: ${total_cost / total[Asset]:.2f} total_cost: ${total_cost:.2f} total_value: ${total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
             )
 
     # 开仓
