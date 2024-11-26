@@ -23,13 +23,17 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
     ```
     python3 -m pip install -r requirements.txt 
     ```
-4. 通过python3 main.py启动程序, 程序会自动读取配置文件并开始运行, 可以使用screen/nohup/supervisor等方式实现进程守护
+4. 运行程序
+    ```
+    python3 main.py
+    ```
+   程序会自动读取配置文件并开始运行, 可以使用screen/nohup/supervisor等方式实现进程守护
 
 ## 注意事项
 1. 程序初始时, 请保证你的现货账户中不持有任何BTC, 并且现货或理财账户中拥有足够的USDT
 2. 策略将会利用你现货账户中的USDT和BTC, 以及理财账户中的USDT, 而理财账户中的BTC会被忽略, 您可以手动将资金账户中的BTC转移至理财账户
 3. 关闭理财账户的自动申购
-4. 程序运行后, 不要手动交易BTC, 充提USDT或交易其他币种不影响策略
+4. 程序运行后, 不要手动交易BTC(手动加减仓需停止程序, 并修改redis中dca:xxx:BTC:long:cost对应的值), 充提USDT或交易其他币种不影响策略
 
 ## 参考文献
 
