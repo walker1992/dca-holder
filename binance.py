@@ -184,6 +184,7 @@ class BinanceClient:
                 "timestamp": int(time.time() * 1000),
             }
         )
+        time.sleep(5)
 
     def transfer_to_funding(self, reserve):
         logger.info(f"reserve: {reserve:.8f} {Asset}")

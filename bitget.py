@@ -200,6 +200,7 @@ class BitgetClient:
                 "periodType": "flexible",
             },
         )
+        time.sleep(5)
 
     def transfer_to_funding(self, reserve):
         logger.info(f"reserve: {reserve:.8f} {Asset}")
