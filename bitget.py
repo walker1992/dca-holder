@@ -1,5 +1,18 @@
-from common import *
+import os
+import time
+import ccxt
+
+from common import (
+    BaseClient,
+    TradeParams,
+    round_down,
+    logger,
+    Asset,
+    DEFAULT_TYPE,
+    SELL,
+)
 from dca import Trade
+
 
 EX = "BITGET"
 
@@ -142,7 +155,7 @@ class BitgetClient(BaseClient):
             logger.error(e)
 
     def trading(self, symbol, side, amount, value):
-        logger.info(f"trading {symbol} {side} {amount} ${value}")
+        logger.info(f"trading {symbol} {side} {amount:.8f} ${value}")
         order = self.spot.create_market_order(
             symbol=symbol,
             side=side,
@@ -161,12 +174,7 @@ class BitgetClient(BaseClient):
             logger.error(f"未知交易状态 {status}")
             time.sleep(1)
         self.subscribe("USDT", self.fetch_spot_balance("USDT"))
-        side_zh = "买入" if order["side"] == BUY else "卖出"
         cost = order["cost"]
         price = order["average"]
-        msg = f"[DCA策略] {side_zh} ${cost:.2f} {symbol} at {price:.10f}"
-        logger.info(msg)
-        # 是否选择发送通知
-        # send_notification(msg)
         if cost > 0 and price > 0:
             return {"cost": cost, "price": price}

@@ -1,4 +1,18 @@
-from common import *
+import ccxt
+import time
+import traceback
+
+from common import (
+    logger,
+    rdb,
+    send_notification,
+    Asset,
+    TokenInfo,
+    MIN_SPOT_AMOUNT,
+    EXTRA_AMOUNT,
+    BUY,
+    SELL,
+)
 
 
 class Trade:
