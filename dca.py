@@ -85,6 +85,8 @@ def dca_strategy(trade: Trade):
     if Asset not in total or total[Asset] == 0:
         price = client.fetch_price(Asset)
         token_list[Asset] = TokenInfo(Asset, f"{Asset}/USDT", 0, price)
+    if "USDT" not in total:
+        total["USDT"] = 0
     for token in total:
         if token == "USDT":
             if total["USDT"] < base_amount + EXTRA_AMOUNT:
