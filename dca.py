@@ -33,18 +33,18 @@ def dca_task(trade: Trade):
         try:
             dca_strategy(trade)
         except ccxt.errors.RateLimitExceeded as e:
-            logger.error(f"dca:{user_id}:{ex} DCA RateLimitExceeded {type(e)}")
+            logger.error(f"#{user_id}:{ex} DCA RateLimitExceeded {type(e)}")
             time.sleep(10)
         except ccxt.errors.InsufficientFunds:
-            logger.warning(f"dca:{user_id}:{ex} DCA InsufficientFunds")
+            logger.warning(f"#{user_id}:{ex} DCA InsufficientFunds")
             time.sleep(10)
         except ccxt.errors.NetworkError as e:
-            logger.error(f"dca:{user_id}:{ex} DCA NetworkError {type(e)}")
+            logger.error(f"#{user_id}:{ex} DCA NetworkError {type(e)}")
         except ccxt.errors.ExchangeError as e:
-            logger.error(f"dca:{user_id}:{ex} DCA ExchangeError {str(e)}")
+            logger.error(f"#{user_id}:{ex} DCA ExchangeError {str(e)}")
             time.sleep(10)
         except Exception as e:
-            logger.error(f"dca:{user_id}:{ex} {type(e)} {e} {traceback.format_exc()}")
+            logger.error(f"#{user_id}:{ex} {type(e)} {e} {traceback.format_exc()}")
             send_notification(
                 f"dca:{user_id}:{ex} {type(e)} {e} {traceback.format_exc()}"
             )
@@ -74,7 +74,7 @@ def dca_strategy(trade: Trade):
     if max_amount > 0 and base_amount > max_amount:
         base_amount = max_amount
     if base_amount < MIN_SPOT_AMOUNT:
-        logger.info(f"dca:{user_id}:{ex} base_amount: {base_amount:.2f} 小于最小交易额度")
+        logger.info(f"#{user_id}:{ex} base_amount: {base_amount:.2f} 小于最小交易额度")
         return
     total = client.spot.fetch_balance()["total"]
     total_value = 0
@@ -130,7 +130,7 @@ def dca_strategy(trade: Trade):
             // (add_position_ratio + increase_position_ratio * count)
         )
         if multiple >= 1:
-            logger.info(f"dca:{user_id}:{ex} 加仓 {token}")
+            logger.info(f"#{user_id}:{ex} 加仓 {token}")
             order = client.trading(symbol, BUY, base_amount / price, base_amount)
             if order:
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:price", order["price"])
@@ -147,7 +147,7 @@ def dca_strategy(trade: Trade):
         rdb.set(f"dca:{user_id}:{ex}:total_cost", total_cost)
         if total_cost and total[Asset]:
             logger.info(
-                f"dca:{user_id}:{ex} entry_price: {total_cost / total[Asset]:.2f} total_cost: {total_cost:.2f} total_value:{total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
+                f"#{user_id}:{ex} entry_price: {total_cost / total[Asset]:.2f} total_cost: {total_cost:.2f} total_value:{total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
             )
 
     # 开仓
@@ -156,7 +156,7 @@ def dca_strategy(trade: Trade):
             continue
         token_info = token_list[token]
         if token not in total or token in dust_token:
-            logger.info(f"dca:{user_id}:{ex} 开仓 {token}")
+            logger.info(f"#{user_id}:{ex} 开仓 {token}")
             rdb.delete(f"dca:{user_id}:{ex}:{token}:long:price")
             rdb.delete(f"dca:{user_id}:{ex}:{token}:long:cost")
             rdb.delete(f"dca:{user_id}:{ex}:{token}:long:count")
@@ -172,7 +172,7 @@ def dca_strategy(trade: Trade):
 
     # 平仓
     if total_value > total_cost * (1 + min_profit_percent):
-        logger.info(f"dca:{user_id}:{ex} 平仓")
+        logger.info(f"#{user_id}:{ex} 平仓")
         for token, token_info in token_list.items():
             if token != Asset:
                 continue
