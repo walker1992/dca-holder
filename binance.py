@@ -153,9 +153,9 @@ class BinanceClient:
     def subscribe(self, token, amount):
         logger.info(f"subscribe {amount} {token}")
         try:
-            amount = decimal.Decimal(amount).quantize(
+            amount = float(decimal.Decimal(amount).quantize(
                 Decimal("0.00000001"), rounding=ROUND_FLOOR
-            )
+            ))
             lower = SUBSCRIBE_LIMIT[token]
             if amount < lower:
                 return
@@ -171,9 +171,9 @@ class BinanceClient:
 
     def redeem(self, token, amount):
         logger.info(f"redeem {amount} {token}")
-        amount = decimal.Decimal(amount).quantize(
+        amount = float(decimal.Decimal(amount).quantize(
             Decimal("0.00000001"), rounding=ROUND_FLOOR
-        )
+        ))
         lower = REDEEM_LIMIT[token]
         if amount < lower:
             amount = lower
