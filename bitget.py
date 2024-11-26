@@ -146,7 +146,7 @@ class BitgetClient(BaseClient):
                 fromAccount="spot",
                 toAccount="p2p",
                 code="BTC",
-                amount=f"{reserve:.8f}",
+                amount=float(decimal.Decimal(reserve).quantize(Decimal("0.00000001"), rounding=ROUND_FLOOR))
             )
         except Exception as e:
             logger.error(e)
