@@ -145,7 +145,7 @@ class BitgetClient(BaseClient):
             self.spot.transfer(
                 fromAccount="spot",
                 toAccount="p2p",
-                code="BTC",
+                code=Asset,
                 amount=float(decimal.Decimal(reserve).quantize(Decimal("0.00000001"), rounding=ROUND_FLOOR))
             )
         except Exception as e:
