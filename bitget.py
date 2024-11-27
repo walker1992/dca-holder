@@ -5,7 +5,7 @@ import ccxt
 from common import (
     BaseClient,
     TradeParams,
-    round_down,
+    round_floor,
     logger,
     Asset,
     DEFAULT_TYPE,
@@ -103,7 +103,7 @@ class BitgetClient(BaseClient):
 
     def fetch_earn_balance(self, token):
         # 理财账户的Asset不计算, 因为申购一般有门槛
-        if token == "BTC":
+        if token == Asset:
             return 0
         poss = self.spot.private_earn_get_v2_earn_savings_assets()["data"]["resultList"]
         for pos in poss:
@@ -112,7 +112,7 @@ class BitgetClient(BaseClient):
         return 0
 
     def subscribe(self, token, amount):
-        amount = round_down(amount)
+        amount = round_floor(amount)
         logger.info(f"subscribe {amount} {token}")
         try:
             lower = SUBSCRIBE_LIMIT[token]
@@ -130,7 +130,7 @@ class BitgetClient(BaseClient):
             logger.error(e)
 
     def redeem(self, token, amount):
-        amount = round_down(amount)
+        amount = round_floor(amount)
         logger.info(f"redeem {amount} {token}")
         lower = REDEEM_LIMIT[token]
         if amount < lower:
@@ -145,7 +145,7 @@ class BitgetClient(BaseClient):
         time.sleep(5)
 
     def transfer_to_funding(self, amount):
-        amount = round_down(amount)
+        amount = round_floor(amount)
         logger.info(f"reserve: {amount} {Asset}")
         try:
             self.spot.transfer(

@@ -142,7 +142,7 @@ class BaseClient:
         raise NotImplementedError
 
 
-def round_down(amount: float):
+def round_floor(amount: float):
     return float(Decimal(amount).quantize(Decimal("0.00000001"), rounding=ROUND_FLOOR))
 
 

@@ -2,7 +2,7 @@ import os
 import time
 import ccxt
 
-from common import BaseClient, TradeParams, round_down, logger, Asset, DEFAULT_TYPE
+from common import BaseClient, TradeParams, round_floor, logger, Asset, DEFAULT_TYPE
 from dca import Trade
 
 
@@ -91,7 +91,7 @@ class BinanceClient(BaseClient):
         return 0
 
     def subscribe(self, token, amount):
-        amount = round_down(amount)
+        amount = round_floor(amount)
         logger.info(f"subscribe {amount} {token}")
         try:
             lower = SUBSCRIBE_LIMIT[token]
@@ -108,7 +108,7 @@ class BinanceClient(BaseClient):
             logger.error(e)
 
     def redeem(self, token, amount):
-        amount = round_down(amount)
+        amount = round_floor(amount)
         logger.info(f"redeem {amount} {token}")
         lower = REDEEM_LIMIT[token]
         if amount < lower:

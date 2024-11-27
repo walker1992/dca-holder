@@ -99,15 +99,10 @@ def dca_strategy(trade: Trade):
     if Asset not in total or total[Asset] == 0:
         price = client.fetch_price(Asset)
         token_list[Asset] = TokenInfo(Asset, f"{Asset}/USDT", 0, price)
-    if "USDT" not in total:
-        total["USDT"] = 0
-    for token in total:
-        if token == "USDT":
-            if total["USDT"] < base_amount + EXTRA_AMOUNT:
-                client.redeem("USDT", base_amount + EXTRA_AMOUNT - total["USDT"])
-                return
-        if token != Asset:
-            continue
+    if total.get("USDT", 0) < base_amount + EXTRA_AMOUNT:
+        client.redeem("USDT", base_amount + EXTRA_AMOUNT - total["USDT"])
+        return
+    for token in [Asset]:
         balance = total[token]
         if balance == 0:
             dust_token.add(token)
@@ -121,15 +116,15 @@ def dca_strategy(trade: Trade):
         total_value += value
         cost = rdb.get(f"dca:{user_id}:{ex}:{token}:long:cost")
         if not cost:
-            logger.error(f"dca:{user_id}:{ex} no cost for {token}")
+            logger.error(f"#{user_id}:{ex} no cost for {token}")
             return
         last_price = rdb.get(f"dca:{user_id}:{ex}:{token}:long:price")
         if not last_price:
-            logger.error(f"dca:{user_id}:{ex} no last_price for {token}")
+            logger.error(f"#{user_id}:{ex} no last_price for {token}")
             return
         count = rdb.get(f"dca:{user_id}:{ex}:{token}:long:count")
         if not count:
-            logger.error(f"dca:{user_id}:{ex} no count for {token}")
+            logger.error(f"#{user_id}:{ex} no count for {token}")
             return
         cost = float(cost)
         total_cost += cost
