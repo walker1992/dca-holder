@@ -1,12 +1,14 @@
 <div align="center">
 <h1> DCA Holder </h1>
 
-
 这是一个融合了平均成本法与长期持有策略的加密量化策略, 在主流交易所[币安, Bitget]上实现, 其思想同样适用于其他核心资产, 如纳指, 黄金等
 
-所有代码均有实盘资金不间断测试, 非demo级别, 请放心使用
-
 Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong/bulita)
+
+<h5>所有代码均有实盘资金不间断测试, 非demo级别, 请放心使用<h5>
+
+有疑问找[布里塔](https://chat.bulita.net)
+
 </div>
 
 ## 特点
