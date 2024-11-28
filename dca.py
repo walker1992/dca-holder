@@ -82,7 +82,6 @@ def dca_strategy(trade: Trade):
         ) * client.fetch_price(Asset)
         rdb.set(f"dca:{user_id}:{ex}:usdt:long:balance", usdt)
     base_amount = float(usdt) / shares
-
     if min_amount > 0 and base_amount < min_amount:
         base_amount = min_amount
     if max_amount > 0 and base_amount > max_amount:
@@ -96,9 +95,6 @@ def dca_strategy(trade: Trade):
     # 有些情况下币种会卖不干净, 成为灰尘币
     dust_token = set()
     token_list = {}
-    if Asset not in total or total[Asset] == 0:
-        price = client.fetch_price(Asset)
-        token_list[Asset] = TokenInfo(Asset, f"{Asset}/USDT", 0, price)
     if total.get("USDT", 0) < base_amount + EXTRA_AMOUNT:
         client.redeem("USDT", base_amount + EXTRA_AMOUNT - total.get("USDT", 0))
         return
@@ -158,6 +154,10 @@ def dca_strategy(trade: Trade):
             logger.info(
                 f"#{user_id}:{ex} entry_price: ${total_cost / total[Asset]:.2f} total_cost: ${total_cost:.2f} total_value: ${total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
             )
+
+    if Asset not in token_list:
+        price = client.fetch_price(Asset)
+        token_list[Asset] = TokenInfo(Asset, f"{Asset}/USDT", 0, price)
 
     # 开仓
     for token in token_list:
