@@ -84,7 +84,6 @@ class BitgetClient(BaseClient):
         )
 
     def fetch_earn_balance(self, token):
-        # 理财账户的Asset不计算, 因为申购一般有门槛
         if token == Asset:
             return 0
         poss = self.spot.private_earn_get_v2_earn_savings_assets()["data"]["resultList"]
@@ -125,12 +124,12 @@ class BitgetClient(BaseClient):
         )
         time.sleep(10)
 
-    def transfer_to_funding(self, amount):
+    def transfer_to_funding(self, token, amount):
         amount = round_floor(amount)
-        logger.info(f"reserve: {amount} {Asset}")
+        logger.info(f"reserve: {amount} {token}")
         try:
             self.spot.transfer(
-                fromAccount="spot", toAccount="p2p", code=Asset, amount=amount
+                fromAccount="spot", toAccount="p2p", code=token, amount=amount
             )
         except Exception as e:
             logger.error(e)

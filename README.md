@@ -1,7 +1,7 @@
 <div align="center">
 <h1> DCA Holder </h1>
 
-这是一个融合了平均成本法与长期持有策略的加密量化策略, 在主流交易所[币安, Bitget]上实现, 其思想同样适用于其他核心资产, 如纳指, 黄金等
+这是一个融合了平均成本法与长期持有策略的加密量化策略, 在主流交易所[币安, 欧易, Bitget]上实现, 其思想同样适用于其他核心资产, 如纳指, 黄金等
 
 Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong/bulita)
 
@@ -13,7 +13,7 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 
 ## 特点
 
-1. 只需要填写API即可开启自动化交易, 目前支持币安/Bitget, 只支持现货BTC/USDT, 支持多账户
+1. 只需要填写API即可开启自动化交易, 目前支持币安/欧易/Bitget, 只支持现货BTC/USDT, 支持多账户
 2. 核心思想是平均成本与屯币, 如果价格上涨, 将在固定盈利点卖出, 并将盈利部分转移至资金账户进行屯币, 如果价格下跌, 将不断补仓, 拉低成本
 3. 闲置的USDT会自动划转到理财账户享受借贷利润
 4. 如果长期下跌后账户中已经没有足够USDT继续买入BTC, 这时候BTC处于历史低位, 应该从其他地方划转USDT到交易所, 维持程序正常运行
@@ -43,6 +43,8 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 [https://github.com/ccxt/ccxt](https://github.com/ccxt/ccxt)
 
 [https://binance-docs.github.io/apidocs/spot/cn](https://binance-docs.github.io/apidocs/spot/cn)
+
+[https://www.okx.com/docs-v5/zh/](https://www.okx.com/docs-v5/zh/)
 
 [https://www.bitget.com/zh-CN/api-doc/spot/intro](https://www.bitget.com/zh-CN/api-doc/spot/intro)
 

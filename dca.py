@@ -187,7 +187,7 @@ def dca_strategy(trade: Trade):
                 continue
             # 将净盈利的Asset转到资金账户
             reserve = (total_value - total_cost) / token_info.price
-            client.transfer_to_funding(reserve)
+            client.transfer_to_funding(token, reserve)
 
             token_info.balance = token_info.balance - reserve
             count = rdb.get(f"dca:{user_id}:{ex}:{token}:long:count")

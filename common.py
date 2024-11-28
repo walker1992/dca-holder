@@ -138,7 +138,7 @@ class BaseClient:
     def redeem(self, token, amount):
         raise NotImplementedError
 
-    def transfer_to_funding(self, amount):
+    def transfer_to_funding(self, token, amount):
         raise NotImplementedError
 
 
