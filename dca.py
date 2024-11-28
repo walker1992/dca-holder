@@ -99,7 +99,7 @@ def dca_strategy(trade: Trade):
         client.redeem("USDT", base_amount + EXTRA_AMOUNT - total.get("USDT", 0))
         return
     for token in [Asset]:
-        balance = total[token]
+        balance = total.get(token, 0)
         if balance == 0:
             dust_token.add(token)
             continue
