@@ -142,7 +142,7 @@ class BitgetClient(BaseClient):
                 "periodType": "flexible",
             },
         )
-        time.sleep(5)
+        time.sleep(10)
 
     def transfer_to_funding(self, amount):
         amount = round_floor(amount)

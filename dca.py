@@ -100,7 +100,7 @@ def dca_strategy(trade: Trade):
         price = client.fetch_price(Asset)
         token_list[Asset] = TokenInfo(Asset, f"{Asset}/USDT", 0, price)
     if total.get("USDT", 0) < base_amount + EXTRA_AMOUNT:
-        client.redeem("USDT", base_amount + EXTRA_AMOUNT - total["USDT"])
+        client.redeem("USDT", base_amount + EXTRA_AMOUNT - total.get("USDT", 0))
         return
     for token in [Asset]:
         balance = total[token]
