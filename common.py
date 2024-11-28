@@ -18,7 +18,7 @@ BUY = "buy"
 SELL = "sell"
 
 EXTRA_AMOUNT = 5
-MIN_SPOT_AMOUNT = 5
+MIN_SPOT_AMOUNT = 5.5
 
 logger = logger.patch(lambda record: record.update(name=f"[DCA-HOLDER]"))
 

@@ -8,23 +8,6 @@ from dca import Trade
 
 EX = "BN"
 
-MIN_SUBSCRIBE_BTC_AMOUNT = 0.0015
-MIN_SUBSCRIBE_USDT_AMOUNT = 0.1
-
-SUBSCRIBE_LIMIT = {
-    "BTC": MIN_SUBSCRIBE_BTC_AMOUNT,
-    "USDT": MIN_SUBSCRIBE_USDT_AMOUNT,
-}
-
-MIN_REDEEM_BTC_AMOUNT = 0.00001
-# MIN_REDEEM_USDT_AMOUNT = 0.001
-MIN_REDEEM_USDT_AMOUNT = 1
-
-REDEEM_LIMIT = {
-    "BTC": MIN_REDEEM_BTC_AMOUNT,
-    "USDT": MIN_REDEEM_USDT_AMOUNT,
-}
-
 
 def init_binance_trade():
     trades = []
@@ -91,12 +74,11 @@ class BinanceClient(BaseClient):
         return 0
 
     def subscribe(self, token, amount):
+        if token == Asset:
+            return
         amount = round_floor(amount)
         logger.info(f"subscribe {amount} {token}")
         try:
-            lower = SUBSCRIBE_LIMIT[token]
-            if amount < lower:
-                return
             self.spot.sapiPostSimpleEarnFlexibleSubscribe(
                 {
                     "productId": token + "001",
@@ -108,11 +90,12 @@ class BinanceClient(BaseClient):
             logger.error(e)
 
     def redeem(self, token, amount):
+        if token == Asset:
+            return
+        if amount < 1:
+            amount = 1
         amount = round_floor(amount)
         logger.info(f"redeem {amount} {token}")
-        lower = REDEEM_LIMIT[token]
-        if amount < lower:
-            amount = lower
         self.spot.sapiPostSimpleEarnFlexibleRedeem(
             {
                 "productId": token + "001",
