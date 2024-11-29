@@ -1,6 +1,7 @@
 import os
 import time
 import ccxt
+from functools import partial
 
 from common import BaseClient, TradeParams, round_floor, logger, Asset, DEFAULT_TYPE
 from dca import Trade
@@ -119,26 +120,4 @@ class BinanceClient(BaseClient):
             logger.error(e)
 
     def trading(self, symbol, side, amount, value):
-        logger.info(f"trading {symbol} {side} {amount:.8f} ${value}")
-        order = self.spot.create_market_order(
-            symbol=symbol,
-            side=side,
-            amount=amount,
-        )
-        while True:
-            order = self.spot.fetch_order(order["id"], symbol)
-            logger.info(f"order {order}")
-            status = order["status"].lower()
-            if status == "closed":
-                break
-            elif status == "canceled":
-                return
-            elif status == "open":
-                continue
-            logger.error(f"未知交易状态 {status}")
-            time.sleep(1)
-        self.subscribe("USDT", self.fetch_spot_balance("USDT"))
-        cost = order["cost"]
-        price = order["average"]
-        if cost > 0 and price > 0:
-            return {"cost": cost, "price": price}
+        partial(super().place_market_order, reverse=False)

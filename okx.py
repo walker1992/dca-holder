@@ -1,5 +1,7 @@
 import os
 import time
+from functools import partial
+
 import ccxt
 
 from common import (
@@ -122,29 +124,7 @@ class OKXClient(BaseClient):
         self.transfer_to_spot(token, amount)
 
     def trading(self, symbol, side, amount, value):
-        logger.info(f"trading {symbol} {side} {amount:.8f} ${value}")
-        order = self.spot.create_market_order(
-            symbol=symbol,
-            side=side,
-            amount=amount,
-        )
-        while True:
-            order = self.spot.fetch_order(order["id"], symbol)
-            logger.info(f"order {order}")
-            status = order["status"].lower()
-            if status == "closed":
-                break
-            elif status == "canceled":
-                return
-            elif status == "open":
-                continue
-            logger.error(f"未知交易状态 {status}")
-            time.sleep(1)
-        self.subscribe("USDT", self.fetch_spot_balance("USDT"))
-        cost = order["cost"]
-        price = order["average"]
-        if cost > 0 and price > 0:
-            return {"cost": cost, "price": price}
+        partial(super().place_market_order, reverse=False)
 
     # 6：资金账户
     # 18：交易账户

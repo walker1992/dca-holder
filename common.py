@@ -4,6 +4,7 @@ import os
 from decimal import Decimal, ROUND_FLOOR
 import urllib3
 import dotenv
+import time
 
 dotenv.load_dotenv()
 
@@ -122,10 +123,38 @@ class BaseClient:
     def fetch_value(self, token):
         return self.fetch_balance(token) * self.fetch_price(token)
 
+    def place_market_order(self, symbol, side, amount, value, reverse):
+        logger.info(f"trading {symbol} {side} {amount:.8f} ${value}")
+        if reverse:
+            amount = amount if side == SELL else value
+        order = self.spot.create_market_order(
+            symbol=symbol,
+            side=side,
+            amount=amount,
+        )
+        while True:
+            order = self.spot.fetch_order(order["id"], symbol)
+            logger.info(f"order {order}")
+            status = order["status"].lower()
+            if status == "closed":
+                break
+            elif status == "canceled":
+                return
+            elif status == "open":
+                continue
+            logger.error(f"未知交易状态 {status}")
+            time.sleep(1)
+        self.subscribe("USDT", self.fetch_spot_balance("USDT"))
+        cost = order["cost"]
+        price = order["average"]
+        if cost > 0 and price > 0:
+            return {"cost": cost, "price": price}
+
     # 每个交易所必须实现以下方法
     def connect_exchange(self, api_key, secret_key, password):
         raise NotImplementedError
 
+    # 用偏函数实现place_market_order方法
     def trading(self, symbol, side, amount, value):
         raise NotImplementedError
 
