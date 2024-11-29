@@ -137,4 +137,4 @@ class BitgetClient(BaseClient):
             logger.error(e)
 
     def trading(self, symbol, side, amount, value):
-        partial(super().place_market_order, reverse=False)
+        partial(super().place_market_order, reverse=True)
