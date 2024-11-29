@@ -94,6 +94,30 @@ class TradeParams:
         self.increase_position_ratio = INCREASE_POSITION_RATIO
 
 
+class Trade:
+    def __init__(
+        self,
+        user_id,
+        exchange,
+        client,
+        shares,
+        min_amount,
+        max_amount,
+        min_profit_percent,
+        add_position_ratio,
+        increase_position_ratio,
+    ):
+        self.user_id = user_id
+        self.exchange = exchange.lower()
+        self.client = client
+        self.shares = shares
+        self.min_amount = min_amount
+        self.max_amount = max_amount
+        self.min_profit_percent = min_profit_percent
+        self.add_position_ratio = add_position_ratio
+        self.increase_position_ratio = increase_position_ratio
+
+
 class TokenInfo:
     def __init__(self, token, symbol, balance, price):
         self.token = token

@@ -5,12 +5,12 @@ import ccxt
 from common import (
     BaseClient,
     TradeParams,
+    Trade,
     round_floor,
     logger,
     Asset,
     DEFAULT_TYPE,
 )
-from dca import DCATrade
 
 
 EX = "OKX"
@@ -43,7 +43,7 @@ def init_okx_trade():
         for idx, uid in enumerate(uids):
             client = OKXClient(api_keys[idx], secret_keys[idx], passwords[idx])
             trade_params = TradeParams(EX)
-            trade = DCATrade(
+            trade = Trade(
                 user_id=uid,
                 exchange=EX,
                 client=client,

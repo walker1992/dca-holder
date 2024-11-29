@@ -2,8 +2,15 @@ import os
 import time
 import ccxt
 
-from common import BaseClient, TradeParams, round_floor, logger, Asset, DEFAULT_TYPE
-from dca import DCATrade
+from common import (
+    BaseClient,
+    TradeParams,
+    Trade,
+    round_floor,
+    logger,
+    Asset,
+    DEFAULT_TYPE,
+)
 
 
 EX = "BN"
@@ -29,7 +36,7 @@ def init_binance_trade():
         for idx, uid in enumerate(uids):
             client = BinanceClient(api_keys[idx], secret_keys[idx], "")
             trade_params = TradeParams(EX)
-            trade = DCATrade(
+            trade = Trade(
                 user_id=uid,
                 exchange=EX,
                 client=client,
