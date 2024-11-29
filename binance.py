@@ -120,4 +120,5 @@ class BinanceClient(BaseClient):
             logger.error(e)
 
     def trading(self, symbol, side, amount, value):
-        partial(super().place_market_order, reverse=False)
+        place_order = partial(super().place_market_order, reverse=False)
+        place_order(symbol, side, amount, value)
