@@ -154,7 +154,7 @@ class BaseClient:
     def connect_exchange(self, api_key, secret_key, password):
         raise NotImplementedError
 
-    # 用偏函数实现place_market_order方法
+    # 调用place_market_order方法
     def trading(self, symbol, side, amount, value):
         raise NotImplementedError
 

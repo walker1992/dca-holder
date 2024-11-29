@@ -1,7 +1,5 @@
 import os
 import time
-from functools import partial
-
 import ccxt
 
 from common import (
@@ -124,8 +122,7 @@ class OKXClient(BaseClient):
         self.transfer_to_spot(token, amount)
 
     def trading(self, symbol, side, amount, value):
-        place_order = partial(super().place_market_order, reverse=False)
-        place_order(symbol, side, amount, value)
+        return super().place_market_order(symbol, side, amount, value, False)
 
     # 6：资金账户
     # 18：交易账户

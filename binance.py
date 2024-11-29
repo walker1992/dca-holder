@@ -1,7 +1,6 @@
 import os
 import time
 import ccxt
-from functools import partial
 
 from common import BaseClient, TradeParams, round_floor, logger, Asset, DEFAULT_TYPE
 from dca import Trade
@@ -120,5 +119,4 @@ class BinanceClient(BaseClient):
             logger.error(e)
 
     def trading(self, symbol, side, amount, value):
-        place_order = partial(super().place_market_order, reverse=False)
-        place_order(symbol, side, amount, value)
+        return super().place_market_order(symbol, side, amount, value, False)

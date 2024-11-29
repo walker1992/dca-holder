@@ -1,6 +1,5 @@
 import os
 import time
-from functools import partial
 
 import ccxt
 
@@ -137,5 +136,4 @@ class BitgetClient(BaseClient):
             logger.error(e)
 
     def trading(self, symbol, side, amount, value):
-        place_order = partial(super().place_market_order, reverse=True)
-        place_order(symbol, side, amount, value)
+        return super().place_market_order(symbol, side, amount, value, True)
