@@ -104,14 +104,15 @@ class BinanceClient(BaseClient):
         )
         time.sleep(5)
 
-    def transfer_to_funding(self, token, reserve):
-        logger.info(f"reserve: {reserve:.8f} {Asset}")
+    def transfer_to_funding(self, token, amount):
+        amount = round_floor(amount)
+        logger.info(f"reserve: {amount} {token}")
         try:
             self.spot.sapi_post_asset_transfer(
                 {
                     "type": "MAIN_FUNDING",
                     "asset": token,
-                    "amount": reserve,
+                    "amount": amount,
                     "timestamp": int(time.time() * 1000),
                 }
             )
