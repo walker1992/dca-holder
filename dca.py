@@ -15,7 +15,7 @@ from common import (
 )
 
 
-class Trade:
+class DCATrade:
     def __init__(
         self,
         user_id,
@@ -39,7 +39,7 @@ class Trade:
         self.increase_position_ratio = increase_position_ratio
 
 
-def dca_task(trade: Trade):
+def dca_task(trade: DCATrade):
     user_id, ex = trade.user_id, trade.exchange
     logger.info(f"#{user_id}:{ex} start")
     rdb.delete(f"dca:{user_id}:{ex}:total_cost")
@@ -64,7 +64,7 @@ def dca_task(trade: Trade):
             )
 
 
-def dca_strategy(trade: Trade):
+def dca_strategy(trade: DCATrade):
     user_id = trade.user_id
     ex = trade.exchange
     client = trade.client

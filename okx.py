@@ -10,7 +10,7 @@ from common import (
     Asset,
     DEFAULT_TYPE,
 )
-from dca import Trade
+from dca import DCATrade
 
 
 EX = "OKX"
@@ -43,7 +43,7 @@ def init_okx_trade():
         for idx, uid in enumerate(uids):
             client = OKXClient(api_keys[idx], secret_keys[idx], passwords[idx])
             trade_params = TradeParams(EX)
-            trade = Trade(
+            trade = DCATrade(
                 user_id=uid,
                 exchange=EX,
                 client=client,

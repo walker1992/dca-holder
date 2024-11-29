@@ -3,7 +3,7 @@ import time
 import ccxt
 
 from common import BaseClient, TradeParams, round_floor, logger, Asset, DEFAULT_TYPE
-from dca import Trade
+from dca import DCATrade
 
 
 EX = "BN"
@@ -29,7 +29,7 @@ def init_binance_trade():
         for idx, uid in enumerate(uids):
             client = BinanceClient(api_keys[idx], secret_keys[idx], "")
             trade_params = TradeParams(EX)
-            trade = Trade(
+            trade = DCATrade(
                 user_id=uid,
                 exchange=EX,
                 client=client,

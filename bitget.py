@@ -10,9 +10,8 @@ from common import (
     logger,
     Asset,
     DEFAULT_TYPE,
-    SELL,
 )
-from dca import Trade
+from dca import DCATrade
 
 
 EX = "BITGET"
@@ -49,7 +48,7 @@ def init_bitget_trade():
         for idx, uid in enumerate(uids):
             client = BitgetClient(api_keys[idx], secret_keys[idx], passwords[idx])
             trade_params = TradeParams(EX)
-            trade = Trade(
+            trade = DCATrade(
                 user_id=uid,
                 exchange=EX,
                 client=client,
