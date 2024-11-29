@@ -113,7 +113,7 @@ class BinanceClient(BaseClient):
 
     def transfer_to_funding(self, token, amount):
         amount = round_floor(amount)
-        logger.info(f"reserve: {amount} {token}")
+        logger.info(f"reserve: {amount:.8f} {token}")
         try:
             self.spot.sapi_post_asset_transfer(
                 {

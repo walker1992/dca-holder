@@ -126,7 +126,7 @@ class BitgetClient(BaseClient):
 
     def transfer_to_funding(self, token, amount):
         amount = round_floor(amount)
-        logger.info(f"reserve: {amount} {token}")
+        logger.info(f"reserve: {amount:.8f} {token}")
         try:
             self.spot.transfer(
                 fromAccount="spot", toAccount="p2p", code=token, amount=amount
