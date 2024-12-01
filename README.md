@@ -58,6 +58,6 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 
 [MIT licensed](./LICENSE)
 
-## Sponsor this project
+## 赞助本项目
 
 ![](https://docs.bulita.net/media/202412/usdt_1733018911.png)
