@@ -201,3 +201,20 @@ def round_floor(amount: float):
 
 def send_notification(content):
     logger.info(content)
+
+
+def calc_pnl(client, token, user_id, ex):
+    total = client.spot.fetch_balance()["total"]
+    balance = total.get(token, 0)
+    if balance == 0:
+        return
+    total_cost = rdb.get(f"dca:{user_id}:{ex}:{token}:long:cost")
+    if not total_cost:
+        return
+    total_cost = float(total_cost)
+    price = client.fetch_price(token)
+    total_value = balance * price
+    entry_price = total_cost / balance
+    logger.info(
+        f"#{user_id}:{ex} entry_price: ${entry_price:.2f} total_cost: ${total_cost:.2f} total_value: ${total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
+    )

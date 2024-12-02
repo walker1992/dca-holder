@@ -1,9 +1,11 @@
-import ccxt
 import time
 import traceback
 
+import ccxt
+
 from common import (
     logger,
+    calc_pnl,
     rdb,
     send_notification,
     Asset,
@@ -20,6 +22,7 @@ def dca_task(trade: Trade):
     user_id, ex = trade.user_id, trade.exchange
     logger.info(f"#{user_id}:{ex} start")
     rdb.delete(f"dca:{user_id}:{ex}:total_cost")
+    calc_pnl(trade.client, Asset, user_id, ex)
     while True:
         try:
             dca_strategy(trade)
@@ -123,16 +126,8 @@ def dca_strategy(trade: Trade):
                 count += 1
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:count", count)
                 time.sleep(3)
+                calc_pnl(client, Asset, user_id, ex)
                 return
-
-    # 每次交易后, 重新计算平均成本和最新盈亏
-    last_total_cost = rdb.get(f"dca:{user_id}:{ex}:total_cost")
-    if not last_total_cost or round(float(last_total_cost)) != round(total_cost):
-        rdb.set(f"dca:{user_id}:{ex}:total_cost", total_cost)
-        if total_cost and total[Asset]:
-            logger.info(
-                f"#{user_id}:{ex} entry_price: ${total_cost / total[Asset]:.2f} total_cost: ${total_cost:.2f} total_value: ${total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
-            )
 
     if Asset not in token_list:
         price = client.fetch_price(Asset)
@@ -156,6 +151,7 @@ def dca_strategy(trade: Trade):
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:cost", order["cost"])
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:count", 1)
                 time.sleep(3)
+                calc_pnl(client, Asset, user_id, ex)
                 return
 
     # 平仓
@@ -195,3 +191,4 @@ def dca_strategy(trade: Trade):
 
         rdb.delete(f"dca:{user_id}:{ex}:usdt:long:balance")
         time.sleep(3)
+        calc_pnl(client, Asset, user_id, ex)
