@@ -7,7 +7,7 @@ from common import (
     logger,
     calc_pnl,
     rdb,
-    send_notification,
+    notify,
     Asset,
     TokenInfo,
     MIN_SPOT_AMOUNT,
@@ -40,9 +40,7 @@ def dca_task(trade: Trade):
             time.sleep(10)
         except Exception as e:
             logger.error(f"#{user_id}:{ex} {type(e)} {e} {traceback.format_exc()}")
-            send_notification(
-                f"dca:{user_id}:{ex} {type(e)} {e} {traceback.format_exc()}"
-            )
+            notify(f"dca:{user_id}:{ex} {type(e)} {e} {traceback.format_exc()}")
 
 
 def dca_strategy(trade: Trade):
@@ -125,6 +123,8 @@ def dca_strategy(trade: Trade):
                 count += 1
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:count", count)
                 time.sleep(3)
+                msg = f"#{user_id}:{ex} {BUY} ${order['cost']:.2f} {symbol} at {order['price']:.2f}"
+                notify(msg)
                 calc_pnl(client, Asset, user_id, ex)
                 return
 
@@ -150,6 +150,8 @@ def dca_strategy(trade: Trade):
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:cost", order["cost"])
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:count", 1)
                 time.sleep(3)
+                msg = f"#{user_id}:{ex} {BUY} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
+                notify(msg)
                 calc_pnl(client, Asset, user_id, ex)
                 return
 
@@ -187,6 +189,8 @@ def dca_strategy(trade: Trade):
                         )
                         rdb.set(f"dca:{user_id}:{ex}:{token}:long:cost", base_amount)
                         rdb.set(f"dca:{user_id}:{ex}:{token}:long:count", 1)
+                        msg = f"#{user_id}:{ex} {SELL} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
+                        notify(msg)
 
         rdb.delete(f"dca:{user_id}:{ex}:usdt:long:balance")
         time.sleep(3)

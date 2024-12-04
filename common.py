@@ -199,7 +199,8 @@ def round_floor(amount: float):
     return float(Decimal(amount).quantize(Decimal("0.00000001"), rounding=ROUND_FLOOR))
 
 
-def send_notification(content):
+# 定义一个函数，发送通知
+def notify(content):
     logger.info(content)
 
 
