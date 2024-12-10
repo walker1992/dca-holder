@@ -119,7 +119,9 @@ class OKXClient(BaseClient):
                 "rate": 0.01,
             }
         )
+        time.sleep(5)
         self.transfer_to_spot(token, amount)
+        time.sleep(5)
 
     def trading(self, symbol, side, amount, value):
         return super().place_market_order(symbol, side, amount, value, False)
