@@ -122,7 +122,7 @@ def dca_strategy(trade: Trade):
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:cost", cost)
                 count += 1
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:count", count)
-                time.sleep(3)
+                time.sleep(5)
                 msg = f"#{user_id}:{ex} {BUY} ${order['cost']:.2f} {symbol} at {order['price']:.2f}"
                 notify(msg)
                 calc_pnl(client, Asset, user_id, ex)
@@ -149,7 +149,7 @@ def dca_strategy(trade: Trade):
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:price", order["price"])
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:cost", order["cost"])
                 rdb.set(f"dca:{user_id}:{ex}:{token}:long:count", 1)
-                time.sleep(3)
+                time.sleep(5)
                 msg = f"#{user_id}:{ex} {BUY} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
                 notify(msg)
                 calc_pnl(client, Asset, user_id, ex)
@@ -193,5 +193,5 @@ def dca_strategy(trade: Trade):
                         notify(msg)
 
         rdb.delete(f"dca:{user_id}:{ex}:usdt:long:balance")
-        time.sleep(3)
+        time.sleep(5)
         calc_pnl(client, Asset, user_id, ex)
