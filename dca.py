@@ -19,9 +19,9 @@ from common import (
 
 
 def dca_task(trade: Trade):
-    user_id, ex = trade.user_id, trade.exchange
+    user_id, ex, min_profit_percent= trade.user_id, trade.exchange, trade.min_profit_percent
     logger.info(f"#{user_id}:{ex} start")
-    calc_pnl(trade.client, Asset, user_id, ex)
+    calc_pnl(trade.client, Asset, user_id, ex, min_profit_percent)
     while True:
         try:
             dca_strategy(trade)
