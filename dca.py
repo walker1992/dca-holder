@@ -125,7 +125,7 @@ def dca_strategy(trade: Trade):
                 time.sleep(5)
                 msg = f"#{user_id}:{ex} {BUY} ${order['cost']:.2f} {symbol} at {order['price']:.2f}"
                 notify(msg)
-                calc_pnl(client, Asset, user_id, ex)
+                calc_pnl(client, Asset, user_id, ex, min_profit_percent)
                 return
 
     if Asset not in token_list:
@@ -152,7 +152,7 @@ def dca_strategy(trade: Trade):
                 time.sleep(5)
                 msg = f"#{user_id}:{ex} {BUY} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
                 notify(msg)
-                calc_pnl(client, Asset, user_id, ex)
+                calc_pnl(client, Asset, user_id, ex, min_profit_percent)
                 return
 
     # 平仓
@@ -194,4 +194,4 @@ def dca_strategy(trade: Trade):
 
         rdb.delete(f"dca:{user_id}:{ex}:usdt:long:balance")
         time.sleep(5)
-        calc_pnl(client, Asset, user_id, ex)
+        calc_pnl(client, Asset, user_id, ex, min_profit_percent)
