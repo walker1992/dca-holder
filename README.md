@@ -7,6 +7,8 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 
 所有代码均有实盘资金7*24小时测试, 非demo级别, 请放心使用
 
+币安跟单链接: https://www.binance.com/zh-CN/copy-trading/lead-details/4467924166879352065
+
 有疑问找[布里塔](https://chat.bulita.net)
 
 </div>
