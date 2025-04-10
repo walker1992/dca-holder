@@ -13,10 +13,15 @@ def main():
     okx_trades = init_okx_trade()
     bitget_trades = init_bitget_trade()
 
-    for trade in binance_trades + okx_trades + bitget_trades:
-        thread = threading.Thread(target=dca_task, args=(trade,))
-        threads.append(thread)
-        thread.start()
+    for trades in [binance_trades, okx_trades, bitget_trades]:
+        if not trades:
+            continue
+        for trade in trades:
+            if not trade:
+                continue
+            thread = threading.Thread(target=dca_task, args=(trade,))
+            threads.append(thread)
+            thread.start()
 
 
 if __name__ == "__main__":

@@ -23,12 +23,24 @@ PRODUCT_ID = {
 
 def init_bitget_trade():
     trades = []
-    uids, api_keys, secret_keys, passwords = (
+    uids, api_keys, secret_keys, passwords, use_multi_accounts = (
         os.getenv(f"{EX}_UID"),
         os.getenv(f"{EX}_API_KEY"),
         os.getenv(f"{EX}_SECRET_KEY"),
         os.getenv(f"{EX}_PASSWORD"),
+        os.getenv(f"{EX}_USE_MULTI_ACCOUNTS"),
     )
+    if not use_multi_accounts:
+        logger.error("Please set USE_MULTI_ACCOUNTS")
+        return
+    use_multi_accounts = use_multi_accounts.lower()
+    if use_multi_accounts == "true":
+        use_multi_accounts = True
+    elif use_multi_accounts == "false":
+        use_multi_accounts = False
+    else:
+        logger.error("USE_MULTI_ACCOUNTS must be true or false")
+        return
     if uids and api_keys and secret_keys and passwords:
         uids, api_keys, secret_keys, passwords = (
             uids.split(","),
@@ -46,12 +58,15 @@ def init_bitget_trade():
             )
             return
         for idx, uid in enumerate(uids):
-            client = BitgetClient(api_keys[idx], secret_keys[idx], passwords[idx])
+            client = BitgetClient(
+                api_keys[idx], secret_keys[idx], passwords[idx], use_multi_accounts
+            )
             trade_params = TradeParams(EX)
             trade = Trade(
                 user_id=uid,
                 exchange=EX,
                 client=client,
+                use_multi_accounts=use_multi_accounts,
                 shares=trade_params.shares,
                 min_amount=trade_params.min_amount,
                 max_amount=trade_params.max_amount,
@@ -64,8 +79,8 @@ def init_bitget_trade():
 
 
 class BitgetClient(BaseClient):
-    def __init__(self, api_key, secret_key, password):
-        super().__init__(api_key, secret_key, password)
+    def __init__(self, api_key, secret_key, password, use_multi_accounts):
+        super().__init__(api_key, secret_key, password, use_multi_accounts)
         self.spot = self.connect_exchange(api_key, secret_key, password)
 
     def connect_exchange(self, apiKey, secretKey, password):

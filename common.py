@@ -43,6 +43,10 @@ except redis.exceptions.ConnectionError:
 
 class TradeParams:
     def __init__(self, EX):
+        USE_MULTI_ACCOUNTS = os.getenv(f"{EX}_USE_MULTI_ACCOUNTS")
+        if not USE_MULTI_ACCOUNTS:
+            logger.error("请设置USE_MULTI_ACCOUNTS")
+        logger.info(f"{EX}_USE_MULTI_ACCOUNTS: {USE_MULTI_ACCOUNTS}")
         SHARES = os.getenv(f"{EX}_SHARES")
         if not SHARES:
             logger.error("请设置SHARES")
@@ -69,6 +73,7 @@ class TradeParams:
         logger.info(f"{EX}_INCREASE_POSITION_RATIO: {INCREASE_POSITION_RATIO}")
         try:
             (
+                USE_MULTI_ACCOUNTS,
                 SHARES,
                 MIN_AMOUNT,
                 MAX_AMOUNT,
@@ -76,6 +81,7 @@ class TradeParams:
                 ADD_POSITION_RATIO,
                 INCREASE_POSITION_RATIO,
             ) = (
+                bool(USE_MULTI_ACCOUNTS),
                 int(SHARES),
                 float(MIN_AMOUNT),
                 float(MAX_AMOUNT),
@@ -86,6 +92,7 @@ class TradeParams:
         except ValueError:
             logger.error("环境变量配置错误")
             raise ValueError("环境变量配置错误")
+        self.use_multi_accounts = USE_MULTI_ACCOUNTS
         self.shares = SHARES
         self.min_amount = MIN_AMOUNT
         self.max_amount = MAX_AMOUNT
@@ -100,6 +107,7 @@ class Trade:
         user_id,
         exchange,
         client,
+        use_multi_accounts,
         shares,
         min_amount,
         max_amount,
@@ -110,6 +118,7 @@ class Trade:
         self.user_id = user_id
         self.exchange = exchange.lower()
         self.client = client
+        self.use_multi_accounts = use_multi_accounts
         self.shares = shares
         self.min_amount = min_amount
         self.max_amount = max_amount
@@ -127,8 +136,9 @@ class TokenInfo:
 
 
 class BaseClient:
-    def __init__(self, api_key, secret_key, password):
+    def __init__(self, api_key, secret_key, password, use_multi_accounts):
         self.spot = self.connect_exchange(api_key, secret_key, password)
+        self.use_multi_accounts = use_multi_accounts
 
     def fetch_symbol(self, token):
         return token + "/USDT"
@@ -137,7 +147,9 @@ class BaseClient:
         return self.spot.fetch_total_balance().get(token, 0)
 
     def fetch_balance(self, token):
-        return self.fetch_spot_balance(token) + self.fetch_earn_balance(token)
+        if self.use_multi_accounts:
+            return self.fetch_spot_balance(token) + self.fetch_earn_balance(token)
+        return self.fetch_spot_balance(token)
 
     def fetch_price(self, token):
         if token == "USDT":
@@ -168,7 +180,8 @@ class BaseClient:
                 continue
             logger.error(f"未知交易状态 {status}")
             time.sleep(1)
-        self.subscribe("USDT", self.fetch_spot_balance("USDT"))
+        if self.use_multi_accounts:
+            self.subscribe("USDT", self.fetch_spot_balance("USDT"))
         cost = order["cost"]
         price = order["average"]
         if cost > 0 and price > 0:
@@ -204,11 +217,18 @@ def notify(content):
     logger.info(content)
 
 
-def calc_pnl(client, token, user_id, ex, min_profit_percent):
+def calc_pnl(client, token, user_id, ex, min_profit_percent, use_multi_accounts):
     total = client.spot.fetch_balance()["total"]
     balance = total.get(token, 0)
     if balance == 0:
         return
+    reserve = 0
+    if not use_multi_accounts:
+        reserve = rdb.get(f"dca:{user_id}:{ex}:{token}:long:reserve")
+        if reserve:
+            balance -= float(reserve)
+        else:
+            reserve = 0
     total_cost = rdb.get(f"dca:{user_id}:{ex}:{token}:long:cost")
     if not total_cost:
         return
@@ -217,6 +237,7 @@ def calc_pnl(client, token, user_id, ex, min_profit_percent):
     total_value = balance * price
     entry_price = total_cost / balance
     target_price = entry_price * (1 + min_profit_percent)
-    logger.info(
-        f"#{user_id}:{ex} entry_price: ${entry_price:.2f} target_price: ${target_price:.2f} total_cost: ${total_cost:.2f} total_value: ${total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
-    )
+    msg = f"#{user_id}:{ex} entry_price: ${entry_price:.2f} target_price: ${target_price:.2f} total_cost: ${total_cost:.2f} total_value: ${total_value:.2f} pnl: {(total_value - total_cost) / total_cost * 100:.2f}%"
+    if not use_multi_accounts:
+        msg += f" reserve: ${reserve:.8f} {token}"
+    logger.info(msg)

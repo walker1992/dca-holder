@@ -19,9 +19,14 @@ from common import (
 
 
 def dca_task(trade: Trade):
-    user_id, ex, min_profit_percent= trade.user_id, trade.exchange, trade.min_profit_percent
+    user_id, ex, min_profit_percent, use_multi_accounts = (
+        trade.user_id,
+        trade.exchange,
+        trade.min_profit_percent,
+        trade.use_multi_accounts,
+    )
     logger.info(f"#{user_id}:{ex} start")
-    calc_pnl(trade.client, Asset, user_id, ex, min_profit_percent)
+    calc_pnl(trade.client, Asset, user_id, ex, min_profit_percent, use_multi_accounts)
     while True:
         try:
             dca_strategy(trade)
@@ -47,17 +52,24 @@ def dca_strategy(trade: Trade):
     user_id = trade.user_id
     ex = trade.exchange
     client = trade.client
+    use_multi_accounts = trade.use_multi_accounts
     shares = trade.shares
     min_amount = trade.min_amount
     max_amount = trade.max_amount
     min_profit_percent = trade.min_profit_percent
     add_position_ratio = trade.add_position_ratio
     increase_position_ratio = trade.increase_position_ratio
-
+    reserve = 0
+    if not use_multi_accounts:
+        reserve = rdb.get(f"dca:{user_id}:{ex}:{Asset}:long:reserve")
+        if reserve:
+            reserve = float(reserve)
+        else:
+            reserve = 0
     usdt = rdb.get(f"dca:{user_id}:{ex}:usdt:long:balance")
     if not usdt:
-        usdt = client.fetch_balance("USDT") + client.fetch_balance(
-            Asset
+        usdt = client.fetch_balance("USDT") + (
+            client.fetch_balance(Asset) - reserve
         ) * client.fetch_price(Asset)
         rdb.set(f"dca:{user_id}:{ex}:usdt:long:balance", usdt)
     base_amount = float(usdt) / shares
@@ -75,11 +87,13 @@ def dca_strategy(trade: Trade):
     dust_token = set()
     token_list = {}
     if total.get("USDT", 0) < base_amount + EXTRA_AMOUNT:
-        client.redeem("USDT", base_amount + EXTRA_AMOUNT - total.get("USDT", 0))
+        if use_multi_accounts:
+            client.redeem("USDT", base_amount + EXTRA_AMOUNT - total.get("USDT", 0))
         return
     for token in [Asset]:
         balance = total.get(token, 0)
-        if balance == 0:
+        balance -= reserve
+        if balance <= 0:
             dust_token.add(token)
             continue
         symbol = token + "/USDT"
@@ -125,7 +139,9 @@ def dca_strategy(trade: Trade):
                 time.sleep(5)
                 msg = f"#{user_id}:{ex} {BUY} ${order['cost']:.2f} {symbol} at {order['price']:.2f}"
                 notify(msg)
-                calc_pnl(client, Asset, user_id, ex, min_profit_percent)
+                calc_pnl(
+                    client, Asset, user_id, ex, min_profit_percent, use_multi_accounts
+                )
                 return
 
     if Asset not in token_list:
@@ -152,7 +168,9 @@ def dca_strategy(trade: Trade):
                 time.sleep(5)
                 msg = f"#{user_id}:{ex} {BUY} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
                 notify(msg)
-                calc_pnl(client, Asset, user_id, ex, min_profit_percent)
+                calc_pnl(
+                    client, Asset, user_id, ex, min_profit_percent, use_multi_accounts
+                )
                 return
 
     # 平仓
@@ -161,9 +179,16 @@ def dca_strategy(trade: Trade):
         for token, token_info in token_list.items():
             if token != Asset:
                 continue
-            # 将净盈利的Asset转到资金账户
+
             reserve = (total_value - total_cost) / token_info.price
-            client.transfer_to_funding(token, reserve)
+            if use_multi_accounts:
+                # 将净盈利的Asset转到资金账户
+                client.transfer_to_funding(token, reserve)
+            else:
+                last_reserve = rdb.get(f"dca:{user_id}:{ex}:{token}:long:reserve")
+                if last_reserve:
+                    reserve += float(last_reserve)
+                rdb.set(f"dca:{user_id}:{ex}:{token}:long:reserve", reserve)
 
             token_info.balance = token_info.balance - reserve
             count = rdb.get(f"dca:{user_id}:{ex}:{token}:long:count")
@@ -194,4 +219,4 @@ def dca_strategy(trade: Trade):
 
         rdb.delete(f"dca:{user_id}:{ex}:usdt:long:balance")
         time.sleep(5)
-        calc_pnl(client, Asset, user_id, ex, min_profit_percent)
+        calc_pnl(client, Asset, user_id, ex, min_profit_percent, use_multi_accounts)
