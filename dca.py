@@ -92,10 +92,13 @@ def dca_strategy(trade: Trade):
         return
     for token in [Asset]:
         balance = total.get(token, 0)
-        balance -= reserve
-        if balance <= 0:
+        if balance < reserve:
+            logger.error(f"#{user_id}:{ex} 币种 {token} 余额小于reserve {reserve:.8f}")
+            continue
+        if balance == 0:
             dust_token.add(token)
             continue
+        balance -= reserve
         symbol = token + "/USDT"
         price = client.fetch_price(token)
         value = balance * price
