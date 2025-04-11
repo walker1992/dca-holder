@@ -226,7 +226,8 @@ def calc_pnl(client, token, user_id, ex, min_profit_percent, use_multi_accounts)
     if not use_multi_accounts:
         reserve = rdb.get(f"dca:{user_id}:{ex}:{token}:long:reserve")
         if reserve:
-            balance -= float(reserve)
+            reserve = float(reserve)
+            balance -= reserve
         else:
             reserve = 0
     total_cost = rdb.get(f"dca:{user_id}:{ex}:{token}:long:cost")
