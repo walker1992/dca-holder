@@ -152,7 +152,6 @@ class OKXClient(BaseClient):
     def transfer_to_funding(self, token, amount):
         if token == Asset:
             amount = round_floor(amount)
-            logger.info(f"reserve: {amount:.8f} {token}")
         try:
             self.spot.transfer(token, amount, "18", "6")
         except Exception as e:

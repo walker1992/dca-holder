@@ -183,17 +183,23 @@ def dca_strategy(trade: Trade):
             if token != Asset:
                 continue
 
-            reserve = (total_value - total_cost) / token_info.price
+            this_reserve = (total_value - total_cost) / token_info.price
+            logger.info(f"reserve: {this_reserve:.8f} {token}")
+            if token.balance < this_reserve:
+                logger.error(f"token.balance: {token.balance:.8f} {token}")
+                continue
             if use_multi_accounts:
                 # 将净盈利的Asset转到资金账户
-                client.transfer_to_funding(token, reserve)
+                client.transfer_to_funding(token, this_reserve)
             else:
+                all_reserve = this_reserve
                 last_reserve = rdb.get(f"dca:{user_id}:{ex}:{token}:long:reserve")
                 if last_reserve:
-                    reserve += float(last_reserve)
-                rdb.set(f"dca:{user_id}:{ex}:{token}:long:reserve", reserve)
+                    last_reserve = float(last_reserve)
+                    all_reserve = last_reserve + this_reserve
+                rdb.set(f"dca:{user_id}:{ex}:{token}:long:reserve", all_reserve)
 
-            token_info.balance = token_info.balance - reserve
+            token_info.balance = token_info.balance - this_reserve
             count = rdb.get(f"dca:{user_id}:{ex}:{token}:long:count")
             # 加仓后的止盈与没有加仓的止盈方案不一样, 保证尽量少交易, 减少手续费
             if count:
