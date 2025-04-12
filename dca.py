@@ -46,6 +46,7 @@ def dca_task(trade: Trade):
         except Exception as e:
             logger.error(f"#{user_id}:{ex} {type(e)} {e} {traceback.format_exc()}")
             notify(f"dca:{user_id}:{ex} {type(e)} {e} {traceback.format_exc()}")
+            break
 
 
 def dca_strategy(trade: Trade):
@@ -93,8 +94,7 @@ def dca_strategy(trade: Trade):
     for token in [Asset]:
         balance = total.get(token, 0)
         if balance < reserve:
-            logger.error(f"#{user_id}:{ex} 币种 {token} 余额小于reserve {reserve:.8f}")
-            continue
+            raise Exception(f"#{user_id}:{ex} 币种 {token} 余额小于reserve {reserve:.8f}")
         if balance == 0:
             dust_token.add(token)
             continue
@@ -108,16 +108,13 @@ def dca_strategy(trade: Trade):
         total_value += value
         cost = rdb.get(f"dca:{user_id}:{ex}:{token}:long:cost")
         if not cost:
-            logger.error(f"#{user_id}:{ex} no cost for {token}")
-            return
+            raise Exception(f"#{user_id}:{ex} no cost for {token}")
         last_price = rdb.get(f"dca:{user_id}:{ex}:{token}:long:price")
         if not last_price:
-            logger.error(f"#{user_id}:{ex} no last_price for {token}")
-            return
+            raise Exception(f"#{user_id}:{ex} no last_price for {token}")
         count = rdb.get(f"dca:{user_id}:{ex}:{token}:long:count")
         if not count:
-            logger.error(f"#{user_id}:{ex} no count for {token}")
-            return
+            raise Exception(f"#{user_id}:{ex} no count for {token}")
         cost = float(cost)
         total_cost += cost
         last_price = float(last_price)
@@ -186,8 +183,7 @@ def dca_strategy(trade: Trade):
             this_reserve = (total_value - total_cost) / token_info.price
             logger.info(f"reserve: {this_reserve:.8f} {token}")
             if token_info.balance < this_reserve:
-                logger.error(f"token.balance: {token_info.balance:.8f} {token}")
-                continue
+                raise Exception(f"token.balance: {token_info.balance:.8f} {token}")
             if use_multi_accounts:
                 # 将净盈利的Asset转到资金账户
                 client.transfer_to_funding(token, this_reserve)
