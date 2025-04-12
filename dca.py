@@ -185,8 +185,8 @@ def dca_strategy(trade: Trade):
 
             this_reserve = (total_value - total_cost) / token_info.price
             logger.info(f"reserve: {this_reserve:.8f} {token}")
-            if token.balance < this_reserve:
-                logger.error(f"token.balance: {token.balance:.8f} {token}")
+            if token_info.balance < this_reserve:
+                logger.error(f"token.balance: {token_info.balance:.8f} {token}")
                 continue
             if use_multi_accounts:
                 # 将净盈利的Asset转到资金账户
