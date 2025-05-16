@@ -4,9 +4,11 @@ from binance import init_binance_trade
 from okx import init_okx_trade
 from bitget import init_bitget_trade
 from dca import dca_task
+import tgMessage
 
 
 def main():
+    tgMessage.send_telegram_message("DCA-HOLDER is starting...")
     threads = []
 
     binance_trades = init_binance_trade()
