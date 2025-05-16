@@ -31,7 +31,7 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 4. 运行程序
     ```
     python3 main.py
-or
+    or
     ./start.sh
     ./stop.sh
     ```
