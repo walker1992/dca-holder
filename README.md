@@ -31,12 +31,9 @@ Github: [https://github.com/gochendong/dca-holder](https://github.com/gochendong
 4. 运行程序
     ```
     python3 main.py
-
+or
     ./start.sh
     ./stop.sh
-
-    nohup python3 main.py > okx-quantify.log 2>&1 & echo $! > quantify.pid  
-    kill $(cat quantify.pid)
     ```
    程序会自动读取配置文件并开始运行, 可以使用screen/nohup/supervisor等方式实现进程守护
 
