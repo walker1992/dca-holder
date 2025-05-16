@@ -5,6 +5,7 @@ from decimal import Decimal, ROUND_FLOOR
 import urllib3
 import dotenv
 import time
+import requests
 
 dotenv.load_dotenv()
 
@@ -22,6 +23,22 @@ EXTRA_AMOUNT = 5
 MIN_SPOT_AMOUNT = 5.5
 
 logger = logger.patch(lambda record: record.update(name=f"[DCA-HOLDER]"))
+
+# Get Telegram bot token and chat ID from environment variables
+bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+chat_id = os.getenv("TELEGRAM_CHAT_ID")
+def send_telegram_message(message):
+    # If Telegram credentials are not configured, just log and return
+    if not bot_token or not chat_id:
+        logger.warning("Telegram not configured. Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to enable notifications.")
+        return
+    
+    try:
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        data = {"chat_id": chat_id, "text": message}
+        requests.post(url, data=data)
+    except Exception as e:
+        logger.error(f"Failed to send Telegram message: {e}")
 
 
 pool = redis.ConnectionPool(
@@ -215,6 +232,7 @@ def round_floor(amount: float):
 # 定义一个函数，发送通知
 def notify(content):
     logger.info(content)
+    send_telegram_message(content)
 
 
 def calc_pnl(client, token, user_id, ex, min_profit_percent, use_multi_accounts):

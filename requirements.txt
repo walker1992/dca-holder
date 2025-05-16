@@ -3,3 +3,4 @@ ccxt==4.4.77
 loguru==0.7.3
 urllib3==1.26.20
 redis==4.3.6
+requests>=2.25.0
