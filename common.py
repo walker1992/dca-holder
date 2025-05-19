@@ -6,7 +6,7 @@ import urllib3
 import dotenv
 import time
 import requests
-import tgMessage
+import message
 
 dotenv.load_dotenv()
 
@@ -216,7 +216,8 @@ def round_floor(amount: float):
 # 定义一个函数，发送通知
 def notify(content):
     logger.info(content)
-    tgMessage.send_telegram_message(content)
+    # 发送企业微信消息
+    message.send_wechat_message(content)
 
 
 def calc_pnl(client, token, user_id, ex, min_profit_percent, use_multi_accounts):
