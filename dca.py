@@ -126,6 +126,10 @@ def dca_strategy(trade: Trade):
             (last_price - price)
             / last_price
             // (add_position_ratio + increase_position_ratio * count)
+            # // 是整除运算符（floor division），它执行除法运算并向下取整到最接近的整数。
+            # 整除 //
+            # print(7 // 2)   # 输出: 3
+            # print(-7 // 2)  # 输出: -4
         )
         if multiple >= 1:
             logger.info(f"#{user_id}:{ex} 加仓 {token}")
