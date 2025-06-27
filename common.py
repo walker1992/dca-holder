@@ -72,6 +72,14 @@ class TradeParams:
         if not INCREASE_POSITION_RATIO:
             logger.error("请设置INCREASE_POSITION_RATIO")
         logger.info(f"{EX}_INCREASE_POSITION_RATIO: {INCREASE_POSITION_RATIO}")
+        
+        # 新增盈利模式配置 - 控制净盈利Asset的处理方式
+        PROFIT_MODE = os.getenv(f"{EX}_PROFIT_MODE")
+        if not PROFIT_MODE:
+            # 默认值：如果启用多账户则转到资金账户，否则保留为底仓
+            PROFIT_MODE = "funding" if USE_MULTI_ACCOUNTS else "reserve"
+        logger.info(f"{EX}_PROFIT_MODE: {PROFIT_MODE}")
+        
         try:
             (
                 USE_MULTI_ACCOUNTS,
@@ -90,9 +98,16 @@ class TradeParams:
                 float(ADD_POSITION_RATIO),
                 float(INCREASE_POSITION_RATIO),
             )
+            
+            # 验证盈利模式配置
+            if PROFIT_MODE not in ["funding", "sell", "reserve"]:
+                logger.error("PROFIT_MODE 必须是 'funding', 'sell' 或 'reserve' 之一")
+                raise ValueError("PROFIT_MODE 配置错误")
+                
         except ValueError:
             logger.error("环境变量配置错误")
             raise ValueError("环境变量配置错误")
+        
         self.use_multi_accounts = USE_MULTI_ACCOUNTS
         self.shares = SHARES
         self.min_amount = MIN_AMOUNT
@@ -100,6 +115,7 @@ class TradeParams:
         self.min_profit_percent = MIN_PROFIT_PERCENT
         self.add_position_ratio = ADD_POSITION_RATIO
         self.increase_position_ratio = INCREASE_POSITION_RATIO
+        self.profit_mode = PROFIT_MODE
 
 
 class Trade:
@@ -115,6 +131,7 @@ class Trade:
         min_profit_percent,
         add_position_ratio,
         increase_position_ratio,
+        profit_mode,
     ):
         self.user_id = user_id
         self.exchange = exchange.lower()
@@ -126,6 +143,7 @@ class Trade:
         self.min_profit_percent = min_profit_percent
         self.add_position_ratio = add_position_ratio
         self.increase_position_ratio = increase_position_ratio
+        self.profit_mode = profit_mode
 
 
 class TokenInfo:

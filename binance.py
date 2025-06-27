@@ -61,6 +61,7 @@ def init_binance_trade():
                 min_profit_percent=trade_params.min_profit_percent,
                 add_position_ratio=trade_params.add_position_ratio,
                 increase_position_ratio=trade_params.increase_position_ratio,
+                profit_mode=trade_params.profit_mode,
             )
             trades.append(trade)
 
