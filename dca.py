@@ -205,16 +205,31 @@ def dca_strategy(trade: Trade):
                     rdb.set(f"dca:{user_id}:{ex}:{token}:long:reserve", all_reserve)
             elif profit_mode == "sell":
                 # 模式2: 直接卖掉，利滚利
-                logger.info(f"#{user_id}:{ex} 盈利模式: 直接卖掉利滚利 {this_reserve:.8f} {token}")
-                sell_value = this_reserve * token_info.price
-                order = client.trading(token_info.symbol, SELL, this_reserve, sell_value)
-                if order:
-                    msg = f"#{user_id}:{ex} 盈利卖出 {SELL} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
-                    notify(msg)
-                    # 卖出后的USDT会自动加入下次交易的资金池
-                    if use_multi_accounts:
-                        # 将卖出获得的USDT申购理财产品
-                        client.subscribe("USDT", client.fetch_spot_balance("USDT"))
+                # 计算利润金额（美元）
+                profit_usd = total_value - total_cost
+                
+                # 如果利润太小（<10U），跳过卖出操作
+                if profit_usd < 10:
+                    logger.info(f"#{user_id}:{ex} 盈利模式: 利润太小 {profit_usd:.2f} USDT < 10 USDT，跳过卖出，保留为底仓")
+                    # 将小额利润保留为底仓
+                    all_reserve = this_reserve
+                    last_reserve = rdb.get(f"dca:{user_id}:{ex}:{token}:long:reserve")
+                    if last_reserve:
+                        last_reserve = float(last_reserve)
+                        all_reserve = last_reserve + this_reserve
+                    rdb.set(f"dca:{user_id}:{ex}:{token}:long:reserve", all_reserve)
+                else:
+                    # 利润足够大，执行卖出操作
+                    logger.info(f"#{user_id}:{ex} 盈利模式: 直接卖掉利滚利 {this_reserve:.8f} {token} (利润: ${profit_usd:.2f})")
+                    sell_value = this_reserve * token_info.price
+                    order = client.trading(token_info.symbol, SELL, this_reserve, sell_value)
+                    if order:
+                        msg = f"#{user_id}:{ex} 盈利卖出 {SELL} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
+                        notify(msg)
+                        # 卖出后的USDT会自动加入下次交易的资金池
+                        if use_multi_accounts:
+                            # 将卖出获得的USDT申购理财产品
+                            client.subscribe("USDT", client.fetch_spot_balance("USDT"))
             elif profit_mode == "reserve":
                 # 模式3: 保留为底仓（适用于非多账户模式）
                 logger.info(f"#{user_id}:{ex} 盈利模式: 保留为底仓 {this_reserve:.8f} {token}")
