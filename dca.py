@@ -18,6 +18,115 @@ from common import (
 )
 
 
+def _handle_sell_profit_mode(user_id, ex, client, token_info, this_reserve, 
+                           total_value, total_cost, base_amount, use_multi_accounts):
+    """Handle sell profit mode - merge all sell operations into one transaction"""
+    profit_usd = total_value - total_cost
+    count = rdb.get(f"dca:{user_id}:{ex}:{token_info.token}:long:count")
+    
+    # Calculate total sell amount
+    if count:
+        count = int(count)
+        if count == 1:
+            # First close position, only sell profit part, keep base position
+            total_sell_amount = this_reserve
+            logger.info(f"#{user_id}:{ex} 盈利模式: 卖出利润部分 {total_sell_amount:.8f} {token_info.token} (利润: ${profit_usd:.2f})")
+        else:
+            # Multiple additions, sell remaining balance minus base position
+            remaining_balance = token_info.balance - this_reserve
+            sell_value = remaining_balance * token_info.price - base_amount
+            sell_amount = sell_value / token_info.price
+            total_sell_amount = this_reserve + sell_amount
+            logger.info(f"#{user_id}:{ex} 盈利模式: 合并卖出 {total_sell_amount:.8f} {token_info.token} (利润: ${profit_usd:.2f})")
+    else:
+        total_sell_amount = this_reserve
+        logger.info(f"#{user_id}:{ex} 盈利模式: 卖出利润部分 {total_sell_amount:.8f} {token_info.token} (利润: ${profit_usd:.2f})")
+    
+    # Execute merged sell operation
+    sell_value = total_sell_amount * token_info.price
+    order = client.trading(token_info.symbol, SELL, total_sell_amount, sell_value)
+    if order:
+        msg = f"#{user_id}:{ex} 合并盈利卖出 {SELL} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
+        notify(msg)
+        
+        # Update position info
+        if count:
+            count = int(count)
+            if count == 1:
+                # First close position, update to current price and remaining cost
+                rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:price", token_info.price)
+                rdb.set(
+                    f"dca:{user_id}:{ex}:{token_info.token}:long:cost",
+                    (token_info.balance - total_sell_amount) * token_info.price,
+                )
+            else:
+                # Multiple additions, reset to base position
+                rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:price", token_info.price)
+                rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:cost", base_amount)
+                rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:count", 1)
+        
+        # USDT from selling will automatically join next trading pool
+        if use_multi_accounts:
+            # Subscribe USDT to wealth management products
+            client.subscribe("USDT", client.fetch_spot_balance("USDT"))
+    
+    # Update balance
+    token_info.balance = token_info.balance - total_sell_amount
+
+
+def _handle_other_profit_modes(user_id, ex, client, token_info, this_reserve, 
+                              base_amount, profit_mode, use_multi_accounts):
+    """Handle other profit modes (funding and reserve)"""
+    if profit_mode == "funding":
+        # Mode 1: Transfer to funding account
+        logger.info(f"#{user_id}:{ex} 盈利模式: 转到资金账户 {this_reserve:.8f} {token_info.token}")
+        if use_multi_accounts:
+            client.transfer_to_funding(token_info.token, this_reserve)
+        else:
+            all_reserve = this_reserve
+            last_reserve = rdb.get(f"dca:{user_id}:{ex}:{token_info.token}:long:reserve")
+            if last_reserve:
+                last_reserve = float(last_reserve)
+                all_reserve = last_reserve + this_reserve
+            rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:reserve", all_reserve)
+    elif profit_mode == "reserve":
+        # Mode 3: Keep as base position (for non-multi-account mode)
+        logger.info(f"#{user_id}:{ex} 盈利模式: 保留为底仓 {this_reserve:.8f} {token_info.token}")
+        all_reserve = this_reserve
+        last_reserve = rdb.get(f"dca:{user_id}:{ex}:{token_info.token}:long:reserve")
+        if last_reserve:
+            last_reserve = float(last_reserve)
+            all_reserve = last_reserve + this_reserve
+        rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:reserve", all_reserve)
+    
+    # Handle remaining balance for funding and reserve modes
+    token_info.balance = token_info.balance - this_reserve
+    count = rdb.get(f"dca:{user_id}:{ex}:{token_info.token}:long:count")
+    if count:
+        count = int(count)
+        if count == 1:
+            rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:price", token_info.price)
+            rdb.set(
+                f"dca:{user_id}:{ex}:{token_info.token}:long:cost",
+                token_info.balance * token_info.price,
+            )
+        else:
+            sell_value = token_info.balance * token_info.price - base_amount
+            sell_amount = sell_value / token_info.price
+            order = client.trading(
+                token_info.symbol, SELL, sell_amount, sell_value
+            )
+            if order:
+                rdb.set(
+                    f"dca:{user_id}:{ex}:{token_info.token}:long:price",
+                    token_info.price,
+                )
+                rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:cost", base_amount)
+                rdb.set(f"dca:{user_id}:{ex}:{token_info.token}:long:count", 1)
+                msg = f"#{user_id}:{ex} {SELL} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
+                notify(msg)
+
+
 def dca_task(trade: Trade):
     user_id, ex, min_profit_percent, use_multi_accounts = (
         trade.user_id,
@@ -191,70 +300,18 @@ def dca_strategy(trade: Trade):
                 raise Exception(f"token.balance: {token_info.balance:.8f} {token}")
             
             # 根据盈利模式处理净盈利Asset
-            if profit_mode == "funding":
-                # 模式1: 转到资金账户（原有逻辑）
-                logger.info(f"#{user_id}:{ex} 盈利模式: 转到资金账户 {this_reserve:.8f} {token}")
-                if use_multi_accounts:
-                    client.transfer_to_funding(token, this_reserve)
-                else:
-                    all_reserve = this_reserve
-                    last_reserve = rdb.get(f"dca:{user_id}:{ex}:{token}:long:reserve")
-                    if last_reserve:
-                        last_reserve = float(last_reserve)
-                        all_reserve = last_reserve + this_reserve
-                    rdb.set(f"dca:{user_id}:{ex}:{token}:long:reserve", all_reserve)
-            elif profit_mode == "sell":
-                # 模式2: 直接卖掉，利滚利
-                # 计算利润金额（美元）
-                profit_usd = total_value - total_cost
-            
-                # 利润足够大，执行卖出操作
-                logger.info(f"#{user_id}:{ex} 盈利模式: 直接卖掉利滚利 {this_reserve:.8f} {token} (利润: ${profit_usd:.2f})")
-                sell_value = this_reserve * token_info.price
-                order = client.trading(token_info.symbol, SELL, this_reserve, sell_value)
-                if order:
-                    msg = f"#{user_id}:{ex} 盈利卖出 {SELL} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
-                    notify(msg)
-                    # 卖出后的USDT会自动加入下次交易的资金池
-                    if use_multi_accounts:
-                        # 将卖出获得的USDT申购理财产品
-                        client.subscribe("USDT", client.fetch_spot_balance("USDT"))
-            elif profit_mode == "reserve":
-                # 模式3: 保留为底仓（适用于非多账户模式）
-                logger.info(f"#{user_id}:{ex} 盈利模式: 保留为底仓 {this_reserve:.8f} {token}")
-                all_reserve = this_reserve
-                last_reserve = rdb.get(f"dca:{user_id}:{ex}:{token}:long:reserve")
-                if last_reserve:
-                    last_reserve = float(last_reserve)
-                    all_reserve = last_reserve + this_reserve
-                rdb.set(f"dca:{user_id}:{ex}:{token}:long:reserve", all_reserve)
-
-            token_info.balance = token_info.balance - this_reserve
-            count = rdb.get(f"dca:{user_id}:{ex}:{token}:long:count")
-            # 加仓后的止盈与没有加仓的止盈方案不一样, 保证尽量少交易, 减少手续费
-            if count:
-                count = int(count)
-                if count == 1:
-                    rdb.set(f"dca:{user_id}:{ex}:{token}:long:price", token_info.price)
-                    rdb.set(
-                        f"dca:{user_id}:{ex}:{token}:long:cost",
-                        token_info.balance * token_info.price,
-                    )
-                else:
-                    sell_value = token_info.balance * token_info.price - base_amount
-                    sell_amount = sell_value / token_info.price
-                    order = client.trading(
-                        token_info.symbol, SELL, sell_amount, sell_value
-                    )
-                    if order:
-                        rdb.set(
-                            f"dca:{user_id}:{ex}:{token}:long:price",
-                            token_info.price,
-                        )
-                        rdb.set(f"dca:{user_id}:{ex}:{token}:long:cost", base_amount)
-                        rdb.set(f"dca:{user_id}:{ex}:{token}:long:count", 1)
-                        msg = f"#{user_id}:{ex} {SELL} ${order['cost']:.2f} {token_info.symbol} at {order['price']:.2f}"
-                        notify(msg)
+            if profit_mode == "sell":
+                # 模式2: 直接卖掉，利滚利 - 单独处理sell模式
+                _handle_sell_profit_mode(
+                    user_id, ex, client, token_info, this_reserve, 
+                    total_value, total_cost, base_amount, use_multi_accounts
+                )
+            else:
+                # 处理其他盈利模式（funding和reserve）
+                _handle_other_profit_modes(
+                    user_id, ex, client, token_info, this_reserve, 
+                    base_amount, profit_mode, use_multi_accounts
+                )
 
         rdb.delete(f"dca:{user_id}:{ex}:usdt:long:balance")
         time.sleep(5)
