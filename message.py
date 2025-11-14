@@ -11,7 +11,7 @@ def send_telegram_message(message):
     # Get Telegram bot token and chat ID from environment variables
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    logger.info(f"bot_token: {bot_token}, chat_id: {chat_id}")
+    # logger.info(f"bot_token: {bot_token}, chat_id: {chat_id}")
     
     # If Telegram credentials are not configured, just log and return
     if not bot_token or not chat_id:
