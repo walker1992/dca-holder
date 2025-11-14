@@ -235,7 +235,8 @@ def round_floor(amount: float):
 def notify(content):
     logger.info(content)
     # 发送企业微信消息
-    message.send_wechat_message(content)
+    # message.send_wechat_message(content)
+    message.send_telegram_message(content)
 
 
 def calc_pnl(client, token, user_id, ex, min_profit_percent, use_multi_accounts):

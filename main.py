@@ -8,7 +8,8 @@ import message
 
 
 def main():
-    message.send_wechat_message("DCA-HOLDER is starting...")
+    # message.send_wechat_message("DCA-HOLDER is starting...")
+    message.send_telegram_message("DCA-HOLDER is starting...")
     threads = []
 
     binance_trades = init_binance_trade()
